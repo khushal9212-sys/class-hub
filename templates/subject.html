@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ stream.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <a href="/">← Back to Home</a>
+    <h1>{{ stream.name }}</h1>
+
+    <h2>General Folder</h2>
+    <form action="/subject/{{ stream.id }}/upload/general" method="post" enctype="multipart/form-data">
+        <input type="text" name="uploader_name" placeholder="Your name (optional)">
+        <input type="file" name="file" required>
+        <button type="submit">Upload</button>
+    </form>
+    <ul>
+        {% for f in general_files %}
+            <li><a href="{{ f.file_url }}" target="_blank">{{ f.filename }}</a> — {{ f.uploader_name or "Anonymous" }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Notes Folder</h2>
+    <form action="/subject/{{ stream.id }}/upload/notes" method="post" enctype="multipart/form-data">
+        <input type="text" name="uploader_name" placeholder="Your name (optional)">
+        <input type="file" name="file" required>
+        <button type="submit">Upload</button>
+    </form>
+    <ul>
+        {% for f in notes_files %}
+            <li><a href="{{ f.file_url }}" target="_blank">{{ f.filename }}</a> — {{ f.uploader_name or "Anonymous" }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

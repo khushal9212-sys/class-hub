@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Class Hub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% if latest_announcement %}
+    <div class="banner">
+        📢 <strong>{{ latest_announcement.uploader_name or "Anonymous" }}:</strong> {{ latest_announcement.text }}
+        <a href="/announcements">See all →</a>
+    </div>
+    {% endif %}
+
+    <h1>Class Hub</h1>
+    <p><em>Unofficial, student-run archive — always confirm dates with your teacher.</em></p>
+
+    <nav>
+        <a href="/announcements">Announcements</a> |
+        <a href="/polls">Polls</a>
+    </nav>
+
+    <h2>📅 Important Dates</h2>
+    <form action="/dates/add" method="post" class="date-form">
+        <input type="text" name="title" placeholder="e.g. DSA Mid-sem Test" required>
+        <input type="date" name="date" required>
+        <select name="type">
+            <option value="test">Test</option>
+            <option value="assignment">Assignment</option>
+        </select>
+        <select name="stream_id">
+            <option value="">General (all subjects)</option>
+            {% for stream in streams %}
+                <option value="{{ stream.id }}">{{ stream.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Add Date</button>
+    </form>
+    <ul class="dates-list">
+        {% for d in dates %}
+            <li class="date-item {{ d.type }}">
+                <span class="date-badge">{{ d.type }}</span>
+                <strong>{{ d.title }}</strong> — {{ d.date }}
+            </li>
+        {% endfor %}
+    </ul>
+
+    <h2>📁 Subjects</h2>
+    <ul>
+        {% for stream in streams %}
+            <li><a href="/subject/{{ stream.id }}">{{ stream.name }}</a></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

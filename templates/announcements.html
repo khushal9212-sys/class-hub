@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Announcements</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <a href="/">← Back to Home</a>
+    <h1>Announcements</h1>
+
+    <form action="/announcements/post" method="post" enctype="multipart/form-data">
+        <input type="text" name="uploader_name" placeholder="Your name (optional)"><br>
+        <textarea name="text" placeholder="Announcement text" required></textarea><br>
+        <input type="file" name="file"><br>
+        <button type="submit">Post</button>
+    </form>
+
+    <ul>
+        {% for post in posts %}
+            <li>
+                <strong>{{ post.uploader_name or "Anonymous" }}:</strong> {{ post.text }}
+                {% if post.file_url %}<br><a href="{{ post.file_url }}" target="_blank">Attached file</a>{% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
