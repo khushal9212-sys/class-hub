@@ -47,33 +47,25 @@
             </div>
             
             <div style="margin-top: 12px;">
-                {% set total_votes = poll.total_votes %}
                 {% for opt in poll.options %}
-                    <div class="poll-option">
-                        <div class="poll-vote-bar">
-                            <span style="font-weight: 500; min-width: 120px;">{{ opt.option_text }}</span>
-                            <div class="vote-bar-bg">
-                                <div class="vote-bar-fill" 
-                                     style="width: {% if total_votes > 0 %}{{ (opt.vote_count / total_votes * 100)|round(1) }}{% else %}0{% endif %}%;
-                                            background: {% if poll.is_active %}linear-gradient(90deg, #4F46E5, #7C3AED){% else %}#94A3B8{% endif %};">
-                                </div>
-                            </div>
-                            <span style="font-size: 13px; color: #64748B; min-width: 60px;">{{ opt.vote_count }} votes</span>
+                    <div class="poll-option" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #F8FAFC; border-radius: 10px; margin-bottom: 8px;">
+                        <span style="font-weight: 500;">{{ opt.option_text }}</span>
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <span style="font-size: 14px; color: #64748B;">{{ opt.vote_count }} votes</span>
+                            {% if poll.is_active %}
+                                <form action="/polls/vote/{{ opt.id }}" method="post" style="margin: 0;">
+                                    <button type="submit" class="btn btn-primary btn-sm">🗳️ Vote</button>
+                                </form>
+                            {% else %}
+                                <span style="font-size: 12px; color: #94A3B8;">Closed</span>
+                            {% endif %}
                         </div>
-                        {% if poll.is_active %}
-                            <form action="/polls/vote/{{ opt.id }}" method="post" style="margin: 0;">
-                                <button type="submit" class="btn btn-primary btn-sm">🗳️ Vote</button>
-                            </form>
-                        {% else %}
-                            <span style="font-size: 12px; color: #94A3B8;">Voting closed</span>
-                        {% endif %}
                     </div>
                 {% endfor %}
             </div>
             
             <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
                 <span style="font-size: 13px; color: #94A3B8;">Created: {{ poll.created_at }}</span>
-                <span style="font-size: 13px; color: #94A3B8;">Total votes: {{ total_votes }}</span>
                 
                 {% if poll.is_active %}
                     <form action="/polls/close/{{ poll.id }}" method="post" style="margin: 0;">
