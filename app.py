@@ -1,10 +1,13 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from supabase import create_client
 import uuid
 import hashlib
+import os
+from datetime import datetime, date, timedelta
+import pytz
 
 app = Flask(__name__)
-app.secret_key = "randomtext"
+app.secret_key = "randomtext"  # Change to environment variable in production
 
 SUPABASE_URL = "https://kjasslioidmuxnwctdyg.supabase.co"
 SUPABASE_KEY = "sb_publishable__BzdVERihynzsfzuL6SVHw_7njcjjr6"
@@ -27,13 +30,28 @@ def home():
     announcements = supabase.table("announcements").select("*").order("created_at", desc=True).limit(1).execute().data
     latest_announcement = announcements[0] if announcements else None
 
-    dates = supabase.table("important_dates").select("*").order("date").execute().data
-    for d in dates:
+    # Get ALL dates
+    all_dates = supabase.table("important_dates").select("*").order("date").execute().data
+    
+    today = date.today()
+    future_dates = []
+    past_dates = []
+    
+    for d in all_dates:
+        date_obj = datetime.strptime(d["date"], "%Y-%m-%d").date()
         d["stream_name"] = stream_map.get(d.get("stream_id"))
         d["attachments"] = supabase.table("date_attachments").select("*").eq("date_id", d["id"]).order("uploaded_at", desc=True).execute().data
         
+        if date_obj >= today:
+            future_dates.append(d)
+        else:
+            past_dates.append(d)
 
-    return render_template("home.html", streams=streams, latest_announcement=latest_announcement, dates=dates)
+    return render_template("home.html", 
+                         streams=streams, 
+                         latest_announcement=latest_announcement, 
+                         future_dates=future_dates,
+                         past_dates=past_dates)
 
 @app.route("/dates/add", methods=["POST"])
 def add_date():
@@ -68,12 +86,15 @@ def upload_file(stream_id, folder_type):
     uploader_name = request.form.get("uploader_name", "")
     file_bytes = file.read()
     file_hash = hashlib.md5(file_bytes).hexdigest()
+    original_filename = file.filename
 
+    # Check for duplicate by hash
     existing = supabase.table("files").select("*").eq("stream_id", stream_id).eq("folder_type", folder_type).eq("file_hash", file_hash).execute().data
+    
     if existing:
         return redirect(url_for("subject", stream_id=stream_id, duplicate=1))
 
-    ext = file.filename.split(".")[-1]
+    ext = original_filename.split(".")[-1]
     unique_name = f"{uuid.uuid4()}.{ext}"
     path = f"{stream_id}/{folder_type}/{unique_name}"
     supabase.storage.from_(BUCKET).upload(path, file_bytes, {"content-type": file.content_type})
@@ -81,7 +102,7 @@ def upload_file(stream_id, folder_type):
 
     supabase.table("files").insert({
         "stream_id": stream_id, "folder_type": folder_type, "uploader_name": uploader_name,
-        "filename": file.filename, "file_url": file_url, "file_hash": file_hash
+        "filename": original_filename, "file_url": file_url, "file_hash": file_hash
     }).execute()
     return redirect(url_for("subject", stream_id=stream_id))
 
@@ -96,12 +117,13 @@ def upload_general():
     uploader_name = request.form.get("uploader_name", "")
     file_bytes = file.read()
     file_hash = hashlib.md5(file_bytes).hexdigest()
+    original_filename = file.filename
 
     existing = supabase.table("files").select("*").is_("stream_id", "null").eq("file_hash", file_hash).execute().data
     if existing:
         return redirect(url_for("general_docs", duplicate=1))
 
-    ext = file.filename.split(".")[-1]
+    ext = original_filename.split(".")[-1]
     unique_name = f"{uuid.uuid4()}.{ext}"
     path = f"general-docs/{unique_name}"
     supabase.storage.from_(BUCKET).upload(path, file_bytes, {"content-type": file.content_type})
@@ -109,7 +131,7 @@ def upload_general():
 
     supabase.table("files").insert({
         "stream_id": None, "folder_type": "general", "uploader_name": uploader_name,
-        "filename": file.filename, "file_url": file_url, "file_hash": file_hash
+        "filename": original_filename, "file_url": file_url, "file_hash": file_hash
     }).execute()
     return redirect(url_for("general_docs"))
 
@@ -140,9 +162,25 @@ def post_announcement():
 
 @app.route("/polls")
 def polls():
-    poll_list = supabase.table("polls").select("*").eq("is_active", True).order("created_at", desc=True).execute().data
+    # Set timezone (adjust to your timezone)
+    IST = pytz.timezone('Asia/Kolkata')
+    now = datetime.now(IST)
+    
+    # Get ALL polls (both active and closed)
+    poll_list = supabase.table("polls").select("*").order("created_at", desc=True).execute().data
+    
     for poll in poll_list:
+        # Auto-close polls older than 7 days
+        if poll["is_active"]:
+            created_at = datetime.fromisoformat(poll["created_at"].replace('Z', '+00:00'))
+            age = now - created_at
+            if age.days >= 7:
+                supabase.table("polls").update({"is_active": False}).eq("id", poll["id"]).execute()
+                poll["is_active"] = False
+        
         poll["options"] = supabase.table("poll_options").select("*").eq("poll_id", poll["id"]).execute().data
+        poll["total_votes"] = sum(opt.get("vote_count", 0) for opt in poll["options"])
+    
     return render_template("polls.html", polls=poll_list)
 
 @app.route("/polls/create", methods=["POST"])
@@ -158,9 +196,16 @@ def create_poll():
 def vote(option_id):
     option = supabase.table("poll_options").select("*").eq("id", option_id).execute().data[0]
     poll_id = option["poll_id"]
+    
+    # Check if poll is still active
+    poll = supabase.table("polls").select("*").eq("id", poll_id).execute().data[0]
+    if not poll["is_active"]:
+        return redirect(url_for("polls", already_voted=1))
+    
     voted = session.get("voted_polls", [])
     if poll_id in voted:
         return redirect(url_for("polls", already_voted=1))
+    
     supabase.table("poll_options").update({"vote_count": option["vote_count"] + 1}).eq("id", option_id).execute()
     voted.append(poll_id)
     session["voted_polls"] = voted

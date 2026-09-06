@@ -1,72 +1,72 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Class Hub</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-    <div class="container">
+{% extends "base.html" %}
+
+{% block title %}Class Hub{% endblock %}
+
+{% block content %}
+    <!-- ===== HERO ===== -->
+    <div class="hero fade-in">
+        <h1>📚 Class Hub</h1>
+        <p>Unofficial, student-run archive — always confirm dates with your teacher.</p>
+    </div>
+
+    <!-- ===== ANNOUNCEMENT BANNER ===== -->
+    {% if latest_announcement %}
+    <div class="banner fade-in">
+        <span class="banner-icon">📢</span>
+        <div class="banner-content">
+            <strong>{{ latest_announcement.uploader_name or "Anonymous" }}:</strong>
+            {{ latest_announcement.text }}
+        </div>
+        <a href="/announcements" class="banner-link">See all →</a>
+    </div>
+    {% endif %}
+
+    <!-- ===== NAVIGATION ===== -->
+    <nav class="nav-bar fade-in">
+        <a href="/announcements">📢 Announcements</a>
+        <a href="/polls">📊 Polls</a>
+        <a href="/general">📂 General Documents</a>
+        <a href="/admin" style="margin-left: auto; color: #94A3B8;">🔐 Admin</a>
+    </nav>
+
+    <!-- ===== IMPORTANT DATES ===== -->
+    <div class="card fade-in">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <h2>📅 Important Dates</h2>
+            <label style="font-size: 14px; color: #64748B; cursor: pointer;">
+                <input type="checkbox" id="showPastDates" onchange="togglePastDates()">
+                Show past dates
+            </label>
+        </div>
         
-        <!-- ===== HERO ===== -->
-        <div class="hero fade-in">
-            <h1>📚 Class Hub</h1>
-            <p>Unofficial, student-run archive — always confirm dates with your teacher.</p>
-        </div>
-
-        <!-- ===== ANNOUNCEMENT BANNER ===== -->
-        {% if latest_announcement %}
-        <div class="banner fade-in">
-            <span class="banner-icon">📢</span>
-            <div class="banner-content">
-                <strong>{{ latest_announcement.uploader_name or "Anonymous" }}:</strong>
-                {{ latest_announcement.text }}
+        <!-- Add Date Form -->
+        <form action="/dates/add" method="post" enctype="multipart/form-data" style="margin-bottom: 20px;">
+            <div class="form-row">
+                <input type="text" name="title" placeholder="e.g. DSA Mid-sem Test" required>
+                <input type="date" name="date" required>
+                <select name="type">
+                    <option value="test">🔴 Test</option>
+                    <option value="assignment">🟡 Assignment</option>
+                </select>
             </div>
-            <a href="/announcements" class="banner-link">See all →</a>
-        </div>
-        {% endif %}
-
-        <!-- ===== NAVIGATION ===== -->
-        <nav class="nav-bar fade-in">
-            <a href="/announcements">📢 Announcements</a>
-            <a href="/polls">📊 Polls</a>
-            <a href="/general">📂 General Documents</a>
-            <a href="/admin" style="margin-left: auto; color: #94A3B8;">🔐 Admin</a>
-        </nav>
-
-        <!-- ===== IMPORTANT DATES ===== -->
-        <div class="card fade-in">
-            <div class="card-header">
-                <h2>📅 Important Dates</h2>
-                <span style="font-size: 13px; color: #94A3B8;">Add a new date ↓</span>
+            <div class="form-row">
+                <select name="stream_id">
+                    <option value="">📌 All subjects</option>
+                    {% for stream in streams %}
+                        <option value="{{ stream.id }}">{{ stream.name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="description" placeholder="Extra note (optional)">
+                <input type="file" name="file">
+                <button type="submit" class="btn btn-primary">➕ Add Date</button>
             </div>
-            
-            <!-- Add Date Form -->
-            <form action="/dates/add" method="post" enctype="multipart/form-data" style="margin-bottom: 20px;">
-                <div class="form-row">
-                    <input type="text" name="title" placeholder="e.g. DSA Mid-sem Test" required>
-                    <input type="date" name="date" required>
-                    <select name="type">
-                        <option value="test">🔴 Test</option>
-                        <option value="assignment">🟡 Assignment</option>
-                    </select>
-                </div>
-                <div class="form-row">
-                    <select name="stream_id">
-                        <option value="">📌 All subjects</option>
-                        {% for stream in streams %}
-                            <option value="{{ stream.id }}">{{ stream.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <input type="text" name="description" placeholder="Extra note (optional)">
-                    <input type="file" name="file">
-                    <button type="submit" class="btn btn-primary">➕ Add Date</button>
-                </div>
-            </form>
+        </form>
 
-            <!-- Date List -->
+        <!-- Future Dates -->
+        <div id="futureDates">
+            <h4 style="color: #10B981; margin-bottom: 8px;">🟢 Upcoming</h4>
             <div class="date-grid">
-                {% for d in dates %}
+                {% for d in future_dates %}
                 <div class="date-item {{ d.type }} fade-in">
                     <div class="date-header">
                         <span class="badge badge-{{ d.type }}">{{ d.type }}</span>
@@ -109,25 +109,83 @@
                     </form>
                 </div>
                 {% else %}
-                    <p class="text-muted">No dates added yet. Add one above!</p>
+                    <p class="text-muted">No upcoming dates.</p>
                 {% endfor %}
             </div>
         </div>
 
-        <!-- ===== SUBJECTS ===== -->
-        <div class="card fade-in">
-            <div class="card-header">
-                <h2>📁 Subjects</h2>
-            </div>
-            <div class="subject-grid">
-                {% for stream in streams %}
-                    <a href="/subject/{{ stream.id }}" class="subject-card">
-                        {{ stream.name }}
-                    </a>
+        <!-- Past Dates -->
+        <div id="pastDates" style="display: none; opacity: 0.6;">
+            <h4 style="color: #94A3B8; margin-bottom: 8px;">🔴 Past</h4>
+            <div class="date-grid">
+                {% for d in past_dates %}
+                <div class="date-item {{ d.type }} fade-in">
+                    <div class="date-header">
+                        <span class="badge badge-{{ d.type }}">{{ d.type }}</span>
+                        <span class="date-title">{{ d.title }}</span>
+                        {% if d.stream_name %}
+                            <span class="subject-tag">{{ d.stream_name }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="date-meta">
+                        <span>📆 {{ d.date }}</span>
+                        {% if d.description %}
+                            <span>📝 {{ d.description }}</span>
+                        {% endif %}
+                        {% if d.file_url %}
+                            <a href="{{ d.file_url }}" target="_blank" class="btn btn-secondary btn-sm">📎 Attachment</a>
+                        {% endif %}
+                    </div>
+
+                    <!-- Attachments -->
+                    {% if d.attachments %}
+                        <ul class="file-list" style="margin-top: 8px;">
+                            {% for att in d.attachments %}
+                                <li class="file-item">
+                                    <span class="file-info">
+                                        <span class="file-icon">📄</span>
+                                        <a href="{{ att.file_url }}" target="_blank" class="file-name">{{ att.filename }}</a>
+                                    </span>
+                                    <span class="file-meta">by {{ att.uploader_name or "Anonymous" }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+
+                    <!-- Attach Form -->
+                    <form action="/dates/{{ d.id }}/attach" method="post" enctype="multipart/form-data" class="form-row" style="margin-top: 10px;">
+                        <input type="text" name="uploader_name" placeholder="Your name (optional)" style="grid-column: span 1;">
+                        <input type="file" name="file" required style="grid-column: span 1;">
+                        <button type="submit" class="btn btn-secondary btn-sm" style="grid-column: span 1;">📎 Attach</button>
+                    </form>
+                </div>
+                {% else %}
+                    <p class="text-muted">No past dates.</p>
                 {% endfor %}
             </div>
         </div>
-
     </div>
-</body>
-</html>
+
+    <!-- ===== SUBJECTS ===== -->
+    <div class="card fade-in">
+        <div class="card-header">
+            <h2>📁 Subjects</h2>
+        </div>
+        <div class="subject-grid">
+            {% for stream in streams %}
+                <a href="/subject/{{ stream.id }}" class="subject-card">
+                    {{ stream.name }}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        function togglePastDates() {
+            const show = document.getElementById('showPastDates').checked;
+            document.getElementById('futureDates').style.display = show ? 'none' : 'block';
+            document.getElementById('pastDates').style.display = show ? 'block' : 'none';
+        }
+    </script>
+{% endblock %}
