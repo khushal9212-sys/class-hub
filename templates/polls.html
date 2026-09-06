@@ -3,9 +3,12 @@
 {% block title %}Polls{% endblock %}
 
 {% block content %}
-    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
         <a href="/" class="btn btn-secondary">← Back</a>
-        <h1 style="font-size: 28px;">📊 Polls</h1>
+        <h1 style="font-size: 28px; margin: 0;">📊 Polls</h1>
+        {% if session.get('is_admin') %}
+            <span style="background: #EF4444; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: auto;">🔐 Admin Mode</span>
+        {% endif %}
     </div>
 
     {% if request.args.get('already_voted') %}
@@ -37,15 +40,22 @@
         <div class="card fade-in">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                 <h3>{{ poll.question }}</h3>
-                <div style="display: flex; gap: 8px; align-items: center;">
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                     {% if poll.is_active %}
                         <span class="badge" style="background: #10B981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px;">🟢 Active</span>
                     {% else %}
                         <span class="badge" style="background: #94A3B8; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px;">🔴 Closed</span>
                     {% endif %}
+                    {% if session.get('is_admin') %}
+                        <form action="/admin/delete/poll/{{ poll.id }}" method="post" style="margin: 0;"
+                              onsubmit="return confirm('⚠️ Delete this poll and all its votes permanently?')">
+                            <button type="submit" class="btn btn-danger btn-sm">🗑️ Delete</button>
+                        </form>
+                    {% endif %}
                 </div>
             </div>
             
+            <!-- Poll Options - Simplified -->
             <div style="margin-top: 12px;">
                 {% for opt in poll.options %}
                     <div class="poll-option" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #F8FAFC; border-radius: 10px; margin-bottom: 8px;">

@@ -1,65 +1,60 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{{ stream.name }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-    <div class="container">
-        
-        <!-- Back button & Header -->
-        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
-            <a href="/" class="btn btn-secondary">← Back</a>
-            <h1 style="font-size: 28px; color: #0F172A;">📘 {{ stream.name }}</h1>
-        </div>
+{% extends "base.html" %}
 
-        {% if request.args.get('duplicate') %}
-            <div class="banner" style="border-color: #EF4444; background: #FEF2F2;">
-                <span style="font-size: 20px;">⚠️</span>
-                <span>This exact file already exists — nothing new was saved.</span>
-            </div>
+{% block title %}{{ stream.name }}{% endblock %}
+
+{% block content %}
+    <!-- Back button & Header -->
+    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
+        <a href="/" class="btn btn-secondary">← Back</a>
+        <h1 style="font-size: 28px; color: #0F172A; margin: 0;">📘 {{ stream.name }}</h1>
+        {% if session.get('is_admin') %}
+            <span style="background: #EF4444; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: auto;">🔐 Admin Mode</span>
         {% endif %}
-
-        <!-- Folder Sections -->
-        {% for ft in folder_types %}
-        <div class="card fade-in" style="padding: 0; overflow: hidden;">
-            <div onclick="toggleFolder('{{ ft }}')" style="padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; border-bottom: 1px solid #E2E8F0;">
-                <div style="display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 17px;">
-                    <span>📁</span>
-                    <span>{{ folder_labels[ft] }}</span>
-                    <span style="font-size: 13px; font-weight: 400; color: #94A3B8;">({{ folders[ft]|length }} files)</span>
-                </div>
-                <span style="font-size: 18px; color: #94A3B8;" id="arrow-{{ ft }}">▼</span>
-            </div>
-            
-            <div id="{{ ft }}" style="display: none; padding: 20px;">
-                <!-- Upload Form -->
-                <form action="/subject/{{ stream.id }}/upload/{{ ft }}" method="post" enctype="multipart/form-data" class="form-row">
-                    <input type="text" name="uploader_name" placeholder="Your name (optional)">
-                    <input type="file" name="file" required>
-                    <button type="submit" class="btn btn-primary">⬆ Upload</button>
-                </form>
-
-                <!-- File List -->
-                <ul class="file-list" style="margin-top: 12px;">
-                    {% for f in folders[ft] %}
-                        <li class="file-item">
-                            <span class="file-info">
-                                <span class="file-icon">📄</span>
-                                <a href="{{ f.file_url }}" target="_blank" class="file-name">{{ f.filename }}</a>
-                            </span>
-                            <span class="file-meta">by {{ f.uploader_name or "Anonymous" }}</span>
-                        </li>
-                    {% else %}
-                        <p class="text-muted">No files in this folder yet.</p>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-        {% endfor %}
-
     </div>
+
+    <!-- Folder Sections -->
+    {% for ft in folder_types %}
+    <div class="card fade-in" style="padding: 0; overflow: hidden;">
+        <div onclick="toggleFolder('{{ ft }}')" style="padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; border-bottom: 1px solid #E2E8F0;">
+            <div style="display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 17px;">
+                <span>📁</span>
+                <span>{{ folder_labels[ft] }}</span>
+                <span style="font-size: 13px; font-weight: 400; color: #94A3B8;">({{ folders[ft]|length }} files)</span>
+            </div>
+            <span style="font-size: 18px; color: #94A3B8;" id="arrow-{{ ft }}">▼</span>
+        </div>
+        
+        <div id="{{ ft }}" style="display: none; padding: 20px;">
+            <!-- Upload Form -->
+            <form action="/subject/{{ stream.id }}/upload/{{ ft }}" method="post" enctype="multipart/form-data" class="form-row">
+                <input type="text" name="uploader_name" placeholder="Your name (optional)">
+                <input type="file" name="file" required>
+                <button type="submit" class="btn btn-primary">⬆ Upload</button>
+            </form>
+
+            <!-- File List -->
+            <ul class="file-list" style="margin-top: 12px;">
+                {% for f in folders[ft] %}
+                    <li class="file-item">
+                        <span class="file-info">
+                            <span class="file-icon">📄</span>
+                            <a href="{{ f.file_url }}" target="_blank" class="file-name">{{ f.filename }}</a>
+                        </span>
+                        <span class="file-meta">by {{ f.uploader_name or "Anonymous" }}</span>
+                        {% if session.get('is_admin') %}
+                            <form action="/admin/delete/file/{{ f.id }}" method="post" style="margin: 0;"
+                                  onsubmit="return confirm('⚠️ Delete this file permanently?\n\nFile: {{ f.filename }}')">
+                                <button type="submit" class="btn btn-danger btn-sm">🗑️ Delete</button>
+                            </form>
+                        {% endif %}
+                    </li>
+                {% else %}
+                    <p class="text-muted">No files in this folder yet.</p>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endfor %}
 
     <script>
         function toggleFolder(id) {
@@ -74,5 +69,4 @@
             }
         }
     </script>
-</body>
-</html>
+{% endblock %}
