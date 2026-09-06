@@ -34,16 +34,30 @@
         <button type="submit">Add Date</button>
     </form>
     <ul class="dates-list">
-        {% for d in dates %}
+                {% for d in dates %}
             <li class="date-item {{ d.type }}">
                 <span class="date-badge">{{ d.type }}</span>
                 <strong>{{ d.title }}</strong> — {{ d.date }}
                 {% if d.stream_name %}<span class="subject-tag">{{ d.stream_name }}</span>{% endif %}
                 {% if d.description %}<br><em>{{ d.description }}</em>{% endif %}
-                {% if d.file_url %}<br><a href="{{ d.file_url }}" target="_blank">📎 Attached file</a>{% endif %}
+                {% if d.file_url %}<br><a href="{{ d.file_url }}" target="_blank">📎 Original attachment</a>{% endif %}
+
+                {% if d.attachments %}
+                    <ul class="attachment-list">
+                        {% for att in d.attachments %}
+                            <li><a href="{{ att.file_url }}" target="_blank">📄 {{ att.filename }}</a> — {{ att.uploader_name or "Anonymous" }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                <form action="/dates/{{ d.id }}/attach" method="post" enctype="multipart/form-data" class="inline-attach-form">
+                    <input type="text" name="uploader_name" placeholder="Your name (optional)">
+                    <input type="file" name="file" required>
+                    <button type="submit">📎 Attach</button>
+                </form>
             </li>
         {% else %}<li><em>No dates added yet</em></li>{% endfor %}
-    </ul>
+        </ul>
 
     <h2>📁 Subjects</h2>
     <ul>{% for stream in streams %}<li><a href="/subject/{{ stream.id }}">{{ stream.name }}</a></li>{% endfor %}</ul>

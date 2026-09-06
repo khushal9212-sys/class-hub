@@ -30,6 +30,8 @@ def home():
     dates = supabase.table("important_dates").select("*").order("date").execute().data
     for d in dates:
         d["stream_name"] = stream_map.get(d.get("stream_id"))
+        d["attachments"] = supabase.table("date_attachments").select("*").eq("date_id", d["id"]).order("uploaded_at", desc=True).execute().data
+        
 
     return render_template("home.html", streams=streams, latest_announcement=latest_announcement, dates=dates)
 
@@ -168,6 +170,20 @@ def vote(option_id):
 def close_poll(poll_id):
     supabase.table("polls").update({"is_active": False}).eq("id", poll_id).execute()
     return redirect(url_for("polls"))
+
+@app.route("/dates/<int:date_id>/attach", methods=["POST"])
+def attach_to_date(date_id):
+    file = request.files["file"]
+    uploader_name = request.form.get("uploader_name", "")
+    ext = file.filename.split(".")[-1]
+    path = f"date-attachments/{uuid.uuid4()}.{ext}"
+    supabase.storage.from_(BUCKET).upload(path, file.read(), {"content-type": file.content_type})
+    file_url = supabase.storage.from_(BUCKET).get_public_url(path)
+    supabase.table("date_attachments").insert({
+        "date_id": date_id, "uploader_name": uploader_name,
+        "filename": file.filename, "file_url": file_url
+    }).execute()
+    return redirect(url_for("home"))
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():

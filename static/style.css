@@ -209,3 +209,27 @@ a {
     0% { left: -150%; }
     100% { left: 150%; }
 }
+
+.attachment-list {
+    margin: 8px 0;
+    padding-left: 16px;
+}
+.attachment-list li {
+    background: none;
+    box-shadow: none;
+    padding: 4px 0;
+    margin: 0;
+    font-size: 13px;
+}
+.inline-attach-form {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-top: 8px;
+    padding: 8px;
+}
+.inline-attach-form input {
+    margin: 0;
+    width: auto;
+    font-size: 12px;
+}
