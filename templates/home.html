@@ -15,10 +15,10 @@
     <h1>Class Hub</h1>
     <p><em>Unofficial, student-run archive — always confirm dates with your teacher.</em></p>
 
-    <nav><a href="/announcements">Announcements</a> | <a href="/polls">Polls</a></nav>
+    <nav><a href="/announcements">Announcements</a> | <a href="/polls">Polls</a> | <a href="/general">General Documents</a></nav>
 
     <h2>📅 Important Dates</h2>
-    <form action="/dates/add" method="post" class="date-form">
+    <form action="/dates/add" method="post" enctype="multipart/form-data" class="date-form">
         <input type="text" name="title" placeholder="e.g. DSA Mid-sem Test" required>
         <input type="date" name="date" required>
         <select name="type">
@@ -29,6 +29,8 @@
             <option value="">General (all subjects)</option>
             {% for stream in streams %}<option value="{{ stream.id }}">{{ stream.name }}</option>{% endfor %}
         </select>
+        <input type="text" name="description" placeholder="Extra note (optional)">
+        <input type="file" name="file">
         <button type="submit">Add Date</button>
     </form>
     <ul class="dates-list">
@@ -37,6 +39,8 @@
                 <span class="date-badge">{{ d.type }}</span>
                 <strong>{{ d.title }}</strong> — {{ d.date }}
                 {% if d.stream_name %}<span class="subject-tag">{{ d.stream_name }}</span>{% endif %}
+                {% if d.description %}<br><em>{{ d.description }}</em>{% endif %}
+                {% if d.file_url %}<br><a href="{{ d.file_url }}" target="_blank">📎 Attached file</a>{% endif %}
             </li>
         {% else %}<li><em>No dates added yet</em></li>{% endfor %}
     </ul>

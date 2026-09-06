@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>General Documents</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <a href="/">← Back to Home</a>
+    <h1>📂 General Documents</h1>
+    <p><em>Files that don't belong to a specific subject.</em></p>
+    {% if request.args.get('duplicate') %}
+        <p style="color:#b91c1c;"><em>This exact file already exists here — nothing new was saved.</em></p>
+    {% endif %}
+    <form action="/general/upload" method="post" enctype="multipart/form-data">
+        <input type="text" name="uploader_name" placeholder="Your name (optional)">
+        <input type="file" name="file" required>
+        <button type="submit">Upload</button>
+    </form>
+    <ul>
+        {% for f in files %}
+            <li><a href="{{ f.file_url }}" target="_blank">📄 {{ f.filename }}</a> — {{ f.uploader_name or "Anonymous" }}</li>
+        {% else %}
+            <li><em>No files yet</em></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

@@ -7,6 +7,9 @@
 <body>
     <a href="/">← Back to Home</a>
     <h1>Polls</h1>
+    {% if request.args.get('already_voted') %}
+        <p style="color:#b91c1c;"><em>You've already voted on this poll.</em></p>
+    {% endif %}
     <form action="/polls/create" method="post">
         <input type="text" name="question" placeholder="Poll question" required><br>
         <input type="text" name="options" placeholder="Option 1"><br>
