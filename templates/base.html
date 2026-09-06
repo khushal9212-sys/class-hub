@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- ===== META ===== -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- ===== TITLE ===== -->
+    <title>{% block title %}Class Hub{% endblock %}</title>
+    
+    <!-- ===== STYLES ===== -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <!-- ===== EXTRA HEAD CONTENT ===== -->
+    {% block head %}{% endblock %}
+</head>
+<body>
+    
+    <!-- ===== PAGE CONTENT ===== -->
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- ===== JAVASCRIPT ===== -->
+    <script>
+        // Close button functionality for any alerts
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('toast-close')) {
+                const toast = e.target.closest('.toast');
+                if (toast) {
+                    toast.style.display = 'none';
+                }
+            }
+        });
+    </script>
+    
+    <!-- ===== EXTRA SCRIPTS ===== -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>
