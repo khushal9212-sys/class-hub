@@ -182,3 +182,30 @@ a {
     width: auto;
     margin: 0;
 }
+
+.subject-tag {
+    display: inline-block;
+    background: #e0e7ff;
+    color: #4338ca;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-left: 8px;
+}
+
+.banner.shine {
+    position: relative;
+    overflow: hidden;
+}
+.banner.shine::after {
+    content: "";
+    position: absolute;
+    top: 0; left: -150%;
+    width: 60%; height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.6), transparent);
+    animation: shine 3s infinite;
+}
+@keyframes shine {
+    0% { left: -150%; }
+    100% { left: 150%; }
+}

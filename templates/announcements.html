@@ -11,6 +11,12 @@
     <form action="/announcements/post" method="post" enctype="multipart/form-data">
         <input type="text" name="uploader_name" placeholder="Your name (optional)"><br>
         <textarea name="text" placeholder="Announcement text" required></textarea><br>
+        <select name="stream_id">
+            <option value="">General (all subjects)</option>
+            {% for stream in streams %}
+                <option value="{{ stream.id }}">{{ stream.name }}</option>
+            {% endfor %}
+        </select><br>
         <input type="file" name="file"><br>
         <button type="submit">Post</button>
     </form>
@@ -19,8 +25,11 @@
         {% for post in posts %}
             <li>
                 <strong>{{ post.uploader_name or "Anonymous" }}:</strong> {{ post.text }}
+                {% if post.stream_name %}<span class="subject-tag">{{ post.stream_name }}</span>{% endif %}
                 {% if post.file_url %}<br><a href="{{ post.file_url }}" target="_blank">Attached file</a>{% endif %}
             </li>
+        {% else %}
+            <li><em>No announcements yet</em></li>
         {% endfor %}
     </ul>
 </body>

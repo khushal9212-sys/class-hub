@@ -7,7 +7,6 @@
 <body>
     <a href="/">← Back to Home</a>
     <h1>Polls</h1>
-
     <form action="/polls/create" method="post">
         <input type="text" name="question" placeholder="Poll question" required><br>
         <input type="text" name="options" placeholder="Option 1"><br>
@@ -15,19 +14,18 @@
         <input type="text" name="options" placeholder="Option 3 (optional)"><br>
         <button type="submit">Create Poll</button>
     </form>
-
-    {% for poll in polls %}
-        <h3>{{ poll.question }}</h3>
-        <ul>
-            {% for opt in poll.options %}
-                <li>
-                    {{ opt.option_text }} — {{ opt.vote_count }} votes
-                    <form action="/polls/vote/{{ opt.id }}" method="post" style="display:inline">
-                        <button type="submit">🗳️ Vote</button>
-                    </form>
-                </li>
-            {% endfor %}
-        </ul>
-    {% endfor %}
+    {% if polls %}
+        {% for poll in polls %}
+            <h3>{{ poll.question }}</h3>
+            <ul>
+                {% for opt in poll.options %}
+                    <li>{{ opt.option_text }} — {{ opt.vote_count }} votes
+                        <form action="/polls/vote/{{ opt.id }}" method="post" style="display:inline"><button type="submit">🗳️ Vote</button></form>
+                    </li>
+                {% endfor %}
+            </ul>
+            <form action="/polls/close/{{ poll.id }}" method="post"><button type="submit">Close this poll</button></form>
+        {% endfor %}
+    {% else %}<p><em>No active polls right now — create one above!</em></p>{% endif %}
 </body>
 </html>

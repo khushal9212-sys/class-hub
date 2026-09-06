@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <a href="/">← Back to Home</a>
+    <h1>🔐 Admin Dashboard</h1>
+
+    <h2>Recent Files</h2>
+    <ul>
+        {% for f in files %}
+            <li><a href="{{ f.file_url }}" target="_blank">📄 {{ f.filename }}</a> — {{ f.uploader_name or "Anonymous" }} — {{ f.uploaded_at }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Recent Announcements</h2>
+    <ul>
+        {% for a in announcements %}
+            <li>{{ a.uploader_name or "Anonymous" }}: {{ a.text }} — {{ a.created_at }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Recent Polls</h2>
+    <ul>
+        {% for p in polls %}
+            <li>{{ p.question }} — {{ p.created_at }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

@@ -7,29 +7,35 @@
 <body>
     <a href="/">← Back to Home</a>
     <h1>{{ stream.name }}</h1>
+    {% if request.args.get('duplicate') %}
+        <p style="color:#b91c1c;"><em>This exact file already exists in this folder — nothing new was saved.</em></p>
+    {% endif %}
 
-    <h2>General Folder</h2>
-    <form action="/subject/{{ stream.id }}/upload/general" method="post" enctype="multipart/form-data">
-        <input type="text" name="uploader_name" placeholder="Your name (optional)">
-        <input type="file" name="file" required>
-        <button type="submit">Upload</button>
-    </form>
-    <ul>
-        {% for f in general_files %}
-            <li><a href="{{ f.file_url }}" target="_blank">{{ f.filename }}</a> — {{ f.uploader_name or "Anonymous" }}</li>
-        {% endfor %}
-    </ul>
+    {% for ft in folder_types %}
+    <div class="folder" onclick="toggleFolder('{{ ft }}')">
+        📁 <span>{{ folder_labels[ft] }}</span>
+    </div>
+    <div id="{{ ft }}" class="folder-content" style="display:none;">
+        <form action="/subject/{{ stream.id }}/upload/{{ ft }}" method="post" enctype="multipart/form-data">
+            <input type="text" name="uploader_name" placeholder="Your name (optional)">
+            <input type="file" name="file" required>
+            <button type="submit">Upload</button>
+        </form>
+        <ul>
+            {% for f in folders[ft] %}
+                <li><a href="{{ f.file_url }}" target="_blank">📄 {{ f.filename }}</a> — {{ f.uploader_name or "Anonymous" }}</li>
+            {% else %}
+                <li><em>No files yet</em></li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endfor %}
 
-    <h2>Notes Folder</h2>
-    <form action="/subject/{{ stream.id }}/upload/notes" method="post" enctype="multipart/form-data">
-        <input type="text" name="uploader_name" placeholder="Your name (optional)">
-        <input type="file" name="file" required>
-        <button type="submit">Upload</button>
-    </form>
-    <ul>
-        {% for f in notes_files %}
-            <li><a href="{{ f.file_url }}" target="_blank">{{ f.filename }}</a> — {{ f.uploader_name or "Anonymous" }}</li>
-        {% endfor %}
-    </ul>
+    <script>
+        function toggleFolder(id) {
+            var el = document.getElementById(id);
+            el.style.display = el.style.display === "none" ? "block" : "none";
+        }
+    </script>
 </body>
 </html>
