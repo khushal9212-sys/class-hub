@@ -3,34 +3,64 @@
 <head>
     <title>Announcements</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <a href="/">← Back to Home</a>
-    <h1>Announcements</h1>
+    <div class="container">
+        
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+            <a href="/" class="btn btn-secondary">← Back</a>
+            <h1 style="font-size: 28px;">📢 Announcements</h1>
+        </div>
 
-    <form action="/announcements/post" method="post" enctype="multipart/form-data">
-        <input type="text" name="uploader_name" placeholder="Your name (optional)"><br>
-        <textarea name="text" placeholder="Announcement text" required></textarea><br>
-        <select name="stream_id">
-            <option value="">General (all subjects)</option>
-            {% for stream in streams %}
-                <option value="{{ stream.id }}">{{ stream.name }}</option>
+        <!-- Create Announcement -->
+        <div class="card">
+            <h3>➕ Post New Announcement</h3>
+            <form action="/announcements/post" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <input type="text" name="uploader_name" placeholder="Your name (optional)">
+                </div>
+                <div class="form-group">
+                    <textarea name="text" placeholder="Announcement text" required></textarea>
+                </div>
+                <div class="form-row">
+                    <select name="stream_id">
+                        <option value="">📌 All subjects</option>
+                        {% for stream in streams %}
+                            <option value="{{ stream.id }}">{{ stream.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="file" name="file">
+                    <button type="submit" class="btn btn-primary">📤 Post</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Announcements List -->
+        <div style="margin-top: 24px;">
+            {% for post in posts %}
+                <div class="card fade-in">
+                    <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 8px;">
+                        <div>
+                            <strong style="font-size: 16px;">{{ post.uploader_name or "Anonymous" }}</strong>
+                            {% if post.stream_name %}
+                                <span class="subject-tag">{{ post.stream_name }}</span>
+                            {% endif %}
+                        </div>
+                        <span style="font-size: 13px; color: #94A3B8;">{{ post.created_at }}</span>
+                    </div>
+                    <p style="margin: 8px 0 12px 0; font-size: 15px;">{{ post.text }}</p>
+                    {% if post.file_url %}
+                        <a href="{{ post.file_url }}" target="_blank" class="btn btn-secondary btn-sm">📎 View Attachment</a>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="card">
+                    <p class="text-muted">No announcements yet. Post one above!</p>
+                </div>
             {% endfor %}
-        </select><br>
-        <input type="file" name="file"><br>
-        <button type="submit">Post</button>
-    </form>
+        </div>
 
-    <ul>
-        {% for post in posts %}
-            <li>
-                <strong>{{ post.uploader_name or "Anonymous" }}:</strong> {{ post.text }}
-                {% if post.stream_name %}<span class="subject-tag">{{ post.stream_name }}</span>{% endif %}
-                {% if post.file_url %}<br><a href="{{ post.file_url }}" target="_blank">Attached file</a>{% endif %}
-            </li>
-        {% else %}
-            <li><em>No announcements yet</em></li>
-        {% endfor %}
-    </ul>
+    </div>
 </body>
 </html>

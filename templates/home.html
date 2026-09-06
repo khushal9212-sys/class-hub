@@ -3,63 +3,131 @@
 <head>
     <title>Class Hub</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    {% if latest_announcement %}
-    <div class="banner shine">
-        📢 <strong>{{ latest_announcement.uploader_name or "Anonymous" }}:</strong> {{ latest_announcement.text }}
-        <a href="/announcements">See all →</a>
-    </div>
-    {% endif %}
+    <div class="container">
+        
+        <!-- ===== HERO ===== -->
+        <div class="hero fade-in">
+            <h1>📚 Class Hub</h1>
+            <p>Unofficial, student-run archive — always confirm dates with your teacher.</p>
+        </div>
 
-    <h1>Class Hub</h1>
-    <p><em>Unofficial, student-run archive — always confirm dates with your teacher.</em></p>
+        <!-- ===== ANNOUNCEMENT BANNER ===== -->
+        {% if latest_announcement %}
+        <div class="banner fade-in">
+            <span class="banner-icon">📢</span>
+            <div class="banner-content">
+                <strong>{{ latest_announcement.uploader_name or "Anonymous" }}:</strong>
+                {{ latest_announcement.text }}
+            </div>
+            <a href="/announcements" class="banner-link">See all →</a>
+        </div>
+        {% endif %}
 
-    <nav><a href="/announcements">Announcements</a> | <a href="/polls">Polls</a> | <a href="/general">General Documents</a></nav>
+        <!-- ===== NAVIGATION ===== -->
+        <nav class="nav-bar fade-in">
+            <a href="/announcements">📢 Announcements</a>
+            <a href="/polls">📊 Polls</a>
+            <a href="/general">📂 General Documents</a>
+            <a href="/admin" style="margin-left: auto; color: #94A3B8;">🔐 Admin</a>
+        </nav>
 
-    <h2>📅 Important Dates</h2>
-    <form action="/dates/add" method="post" enctype="multipart/form-data" class="date-form">
-        <input type="text" name="title" placeholder="e.g. DSA Mid-sem Test" required>
-        <input type="date" name="date" required>
-        <select name="type">
-            <option value="test">Test</option>
-            <option value="assignment">Assignment</option>
-        </select>
-        <select name="stream_id">
-            <option value="">General (all subjects)</option>
-            {% for stream in streams %}<option value="{{ stream.id }}">{{ stream.name }}</option>{% endfor %}
-        </select>
-        <input type="text" name="description" placeholder="Extra note (optional)">
-        <input type="file" name="file">
-        <button type="submit">Add Date</button>
-    </form>
-    <ul class="dates-list">
-                {% for d in dates %}
-            <li class="date-item {{ d.type }}">
-                <span class="date-badge">{{ d.type }}</span>
-                <strong>{{ d.title }}</strong> — {{ d.date }}
-                {% if d.stream_name %}<span class="subject-tag">{{ d.stream_name }}</span>{% endif %}
-                {% if d.description %}<br><em>{{ d.description }}</em>{% endif %}
-                {% if d.file_url %}<br><a href="{{ d.file_url }}" target="_blank">📎 Original attachment</a>{% endif %}
-
-                {% if d.attachments %}
-                    <ul class="attachment-list">
-                        {% for att in d.attachments %}
-                            <li><a href="{{ att.file_url }}" target="_blank">📄 {{ att.filename }}</a> — {{ att.uploader_name or "Anonymous" }}</li>
+        <!-- ===== IMPORTANT DATES ===== -->
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2>📅 Important Dates</h2>
+                <span style="font-size: 13px; color: #94A3B8;">Add a new date ↓</span>
+            </div>
+            
+            <!-- Add Date Form -->
+            <form action="/dates/add" method="post" enctype="multipart/form-data" style="margin-bottom: 20px;">
+                <div class="form-row">
+                    <input type="text" name="title" placeholder="e.g. DSA Mid-sem Test" required>
+                    <input type="date" name="date" required>
+                    <select name="type">
+                        <option value="test">🔴 Test</option>
+                        <option value="assignment">🟡 Assignment</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <select name="stream_id">
+                        <option value="">📌 All subjects</option>
+                        {% for stream in streams %}
+                            <option value="{{ stream.id }}">{{ stream.name }}</option>
                         {% endfor %}
-                    </ul>
-                {% endif %}
+                    </select>
+                    <input type="text" name="description" placeholder="Extra note (optional)">
+                    <input type="file" name="file">
+                    <button type="submit" class="btn btn-primary">➕ Add Date</button>
+                </div>
+            </form>
 
-                <form action="/dates/{{ d.id }}/attach" method="post" enctype="multipart/form-data" class="inline-attach-form">
-                    <input type="text" name="uploader_name" placeholder="Your name (optional)">
-                    <input type="file" name="file" required>
-                    <button type="submit">📎 Attach</button>
-                </form>
-            </li>
-        {% else %}<li><em>No dates added yet</em></li>{% endfor %}
-        </ul>
+            <!-- Date List -->
+            <div class="date-grid">
+                {% for d in dates %}
+                <div class="date-item {{ d.type }} fade-in">
+                    <div class="date-header">
+                        <span class="badge badge-{{ d.type }}">{{ d.type }}</span>
+                        <span class="date-title">{{ d.title }}</span>
+                        {% if d.stream_name %}
+                            <span class="subject-tag">{{ d.stream_name }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="date-meta">
+                        <span>📆 {{ d.date }}</span>
+                        {% if d.description %}
+                            <span>📝 {{ d.description }}</span>
+                        {% endif %}
+                        {% if d.file_url %}
+                            <a href="{{ d.file_url }}" target="_blank" class="btn btn-secondary btn-sm">📎 Attachment</a>
+                        {% endif %}
+                    </div>
 
-    <h2>📁 Subjects</h2>
-    <ul>{% for stream in streams %}<li><a href="/subject/{{ stream.id }}">{{ stream.name }}</a></li>{% endfor %}</ul>
+                    <!-- Attachments -->
+                    {% if d.attachments %}
+                        <ul class="file-list" style="margin-top: 8px;">
+                            {% for att in d.attachments %}
+                                <li class="file-item">
+                                    <span class="file-info">
+                                        <span class="file-icon">📄</span>
+                                        <a href="{{ att.file_url }}" target="_blank" class="file-name">{{ att.filename }}</a>
+                                    </span>
+                                    <span class="file-meta">by {{ att.uploader_name or "Anonymous" }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+
+                    <!-- Attach Form -->
+                    <form action="/dates/{{ d.id }}/attach" method="post" enctype="multipart/form-data" class="form-row" style="margin-top: 10px;">
+                        <input type="text" name="uploader_name" placeholder="Your name (optional)" style="grid-column: span 1;">
+                        <input type="file" name="file" required style="grid-column: span 1;">
+                        <button type="submit" class="btn btn-secondary btn-sm" style="grid-column: span 1;">📎 Attach</button>
+                    </form>
+                </div>
+                {% else %}
+                    <p class="text-muted">No dates added yet. Add one above!</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ===== SUBJECTS ===== -->
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2>📁 Subjects</h2>
+            </div>
+            <div class="subject-grid">
+                {% for stream in streams %}
+                    <a href="/subject/{{ stream.id }}" class="subject-card">
+                        {{ stream.name }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
 </body>
 </html>

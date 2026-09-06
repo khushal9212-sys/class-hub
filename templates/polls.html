@@ -3,32 +3,72 @@
 <head>
     <title>Polls</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <a href="/">← Back to Home</a>
-    <h1>Polls</h1>
-    {% if request.args.get('already_voted') %}
-        <p style="color:#b91c1c;"><em>You've already voted on this poll.</em></p>
-    {% endif %}
-    <form action="/polls/create" method="post">
-        <input type="text" name="question" placeholder="Poll question" required><br>
-        <input type="text" name="options" placeholder="Option 1"><br>
-        <input type="text" name="options" placeholder="Option 2"><br>
-        <input type="text" name="options" placeholder="Option 3 (optional)"><br>
-        <button type="submit">Create Poll</button>
-    </form>
-    {% if polls %}
-        {% for poll in polls %}
-            <h3>{{ poll.question }}</h3>
-            <ul>
-                {% for opt in poll.options %}
-                    <li>{{ opt.option_text }} — {{ opt.vote_count }} votes
-                        <form action="/polls/vote/{{ opt.id }}" method="post" style="display:inline"><button type="submit">🗳️ Vote</button></form>
-                    </li>
-                {% endfor %}
-            </ul>
-            <form action="/polls/close/{{ poll.id }}" method="post"><button type="submit">Close this poll</button></form>
-        {% endfor %}
-    {% else %}<p><em>No active polls right now — create one above!</em></p>{% endif %}
+    <div class="container">
+        
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+            <a href="/" class="btn btn-secondary">← Back</a>
+            <h1 style="font-size: 28px;">📊 Polls</h1>
+        </div>
+
+        {% if request.args.get('already_voted') %}
+            <div class="banner" style="border-color: #EF4444; background: #FEF2F2;">
+                <span>⚠️ You've already voted on this poll.</span>
+            </div>
+        {% endif %}
+
+        <!-- Create Poll -->
+        <div class="card">
+            <h3>➕ Create New Poll</h3>
+            <form action="/polls/create" method="post">
+                <div class="form-group">
+                    <input type="text" name="question" placeholder="Poll question" required>
+                </div>
+                <div class="form-row">
+                    <input type="text" name="options" placeholder="Option 1">
+                    <input type="text" name="options" placeholder="Option 2">
+                    <input type="text" name="options" placeholder="Option 3 (optional)">
+                </div>
+                <button type="submit" class="btn btn-primary">Create Poll</button>
+            </form>
+        </div>
+
+        <!-- Active Polls -->
+        {% if polls %}
+            {% for poll in polls %}
+            <div class="card fade-in">
+                <h3>{{ poll.question }}</h3>
+                <div style="margin-top: 12px;">
+                    {% for opt in poll.options %}
+                        <div class="poll-option">
+                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <span style="font-weight: 500;">{{ opt.option_text }}</span>
+                                <div style="display: flex; align-items: center; gap: 16px;">
+                                    <span style="font-size: 14px; color: #64748B;">{{ opt.vote_count }} votes</span>
+                                    <form action="/polls/vote/{{ opt.id }}" method="post" style="margin: 0;">
+                                        <button type="submit" class="btn btn-primary btn-sm">🗳️ Vote</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+                    <span style="font-size: 13px; color: #94A3B8;">Created: {{ poll.created_at }}</span>
+                    <form action="/polls/close/{{ poll.id }}" method="post" style="margin: 0;">
+                        <button type="submit" class="btn btn-danger btn-sm">🔒 Close Poll</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="card">
+                <p class="text-muted">No active polls right now — create one above!</p>
+            </div>
+        {% endif %}
+
+    </div>
 </body>
 </html>

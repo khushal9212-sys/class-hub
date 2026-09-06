@@ -3,25 +3,60 @@
 <head>
     <title>General Documents</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <a href="/">← Back to Home</a>
-    <h1>📂 General Documents</h1>
-    <p><em>Files that don't belong to a specific subject.</em></p>
-    {% if request.args.get('duplicate') %}
-        <p style="color:#b91c1c;"><em>This exact file already exists here — nothing new was saved.</em></p>
-    {% endif %}
-    <form action="/general/upload" method="post" enctype="multipart/form-data">
-        <input type="text" name="uploader_name" placeholder="Your name (optional)">
-        <input type="file" name="file" required>
-        <button type="submit">Upload</button>
-    </form>
-    <ul>
-        {% for f in files %}
-            <li><a href="{{ f.file_url }}" target="_blank">📄 {{ f.filename }}</a> — {{ f.uploader_name or "Anonymous" }}</li>
-        {% else %}
-            <li><em>No files yet</em></li>
-        {% endfor %}
-    </ul>
+    <div class="container">
+        
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+            <a href="/" class="btn btn-secondary">← Back</a>
+            <h1 style="font-size: 28px;">📂 General Documents</h1>
+        </div>
+
+        <p style="color: #64748B; margin-bottom: 20px;">
+            Files that don't belong to a specific subject.
+        </p>
+
+        {% if request.args.get('duplicate') %}
+            <div class="banner" style="border-color: #EF4444; background: #FEF2F2;">
+                <span>⚠️ This exact file already exists — nothing new was saved.</span>
+            </div>
+        {% endif %}
+
+        <!-- Upload Form -->
+        <div class="card">
+            <h3>⬆ Upload File</h3>
+            <form action="/general/upload" method="post" enctype="multipart/form-data" class="form-row">
+                <input type="text" name="uploader_name" placeholder="Your name (optional)">
+                <input type="file" name="file" required>
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </form>
+        </div>
+
+        <!-- File List -->
+        <div style="margin-top: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="font-size: 18px;">📄 All Files</h3>
+                <span style="font-size: 13px; color: #94A3B8;">{{ files|length }} files</span>
+            </div>
+            
+            <div style="display: grid; gap: 8px;">
+                {% for f in files %}
+                    <div class="file-item fade-in">
+                        <span class="file-info">
+                            <span class="file-icon">📄</span>
+                            <a href="{{ f.file_url }}" target="_blank" class="file-name">{{ f.filename }}</a>
+                        </span>
+                        <span class="file-meta">by {{ f.uploader_name or "Anonymous" }} • {{ f.uploaded_at }}</span>
+                    </div>
+                {% else %}
+                    <div class="card">
+                        <p class="text-muted">No files uploaded yet.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
 </body>
 </html>

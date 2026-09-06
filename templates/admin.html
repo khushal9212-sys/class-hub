@@ -3,30 +3,77 @@
 <head>
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <a href="/">← Back to Home</a>
-    <h1>🔐 Admin Dashboard</h1>
+    <div class="container">
+        
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+            <a href="/" class="btn btn-secondary">← Back</a>
+            <h1 style="font-size: 28px;">🔐 Admin Dashboard</h1>
+        </div>
 
-    <h2>Recent Files</h2>
-    <ul>
-        {% for f in files %}
-            <li><a href="{{ f.file_url }}" target="_blank">📄 {{ f.filename }}</a> — {{ f.uploader_name or "Anonymous" }} — {{ f.uploaded_at }}</li>
-        {% endfor %}
-    </ul>
+        <!-- Stats Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 32px;">
+            <div class="card" style="text-align: center; padding: 20px;">
+                <div style="font-size: 32px;">📄</div>
+                <div style="font-size: 24px; font-weight: 700;">{{ files|length }}</div>
+                <div style="font-size: 13px; color: #64748B;">Recent Files</div>
+            </div>
+            <div class="card" style="text-align: center; padding: 20px;">
+                <div style="font-size: 32px;">📢</div>
+                <div style="font-size: 24px; font-weight: 700;">{{ announcements|length }}</div>
+                <div style="font-size: 13px; color: #64748B;">Announcements</div>
+            </div>
+            <div class="card" style="text-align: center; padding: 20px;">
+                <div style="font-size: 32px;">📊</div>
+                <div style="font-size: 24px; font-weight: 700;">{{ polls|length }}</div>
+                <div style="font-size: 13px; color: #64748B;">Polls</div>
+            </div>
+        </div>
 
-    <h2>Recent Announcements</h2>
-    <ul>
-        {% for a in announcements %}
-            <li>{{ a.uploader_name or "Anonymous" }}: {{ a.text }} — {{ a.created_at }}</li>
-        {% endfor %}
-    </ul>
+        <!-- Recent Files -->
+        <div class="card">
+            <h3>📄 Recent Files</h3>
+            <ul class="file-list">
+                {% for f in files %}
+                    <li class="file-item">
+                        <span class="file-info">
+                            <span class="file-icon">📄</span>
+                            <a href="{{ f.file_url }}" target="_blank" class="file-name">{{ f.filename }}</a>
+                        </span>
+                        <span class="file-meta">by {{ f.uploader_name or "Anonymous" }} • {{ f.uploaded_at }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
 
-    <h2>Recent Polls</h2>
-    <ul>
-        {% for p in polls %}
-            <li>{{ p.question }} — {{ p.created_at }}</li>
-        {% endfor %}
-    </ul>
+        <!-- Recent Announcements -->
+        <div class="card">
+            <h3>📢 Recent Announcements</h3>
+            {% for a in announcements %}
+                <div style="padding: 10px 0; border-bottom: 1px solid #F1F5F9;">
+                    <strong>{{ a.uploader_name or "Anonymous" }}</strong>
+                    <span style="font-size: 13px; color: #94A3B8;">{{ a.created_at }}</span>
+                    <p style="margin: 4px 0 0 0; font-size: 14px;">{{ a.text }}</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Recent Polls -->
+        <div class="card">
+            <h3>📊 Recent Polls</h3>
+            {% for p in polls %}
+                <div style="padding: 10px 0; border-bottom: 1px solid #F1F5F9;">
+                    <strong>{{ p.question }}</strong>
+                    <span style="font-size: 13px; color: #94A3B8;">{{ p.created_at }}</span>
+                    <span style="font-size: 13px; color: #10B981; margin-left: 12px;">
+                        {% if p.is_active %}🟢 Active{% else %}🔴 Closed{% endif %}
+                    </span>
+                </div>
+            {% endfor %}
+        </div>
+
+    </div>
 </body>
 </html>
