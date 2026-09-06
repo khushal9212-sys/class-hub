@@ -26,7 +26,12 @@
         <a href="/announcements">📢 Announcements</a>
         <a href="/polls">📊 Polls</a>
         <a href="/general">📂 General Documents</a>
-        <a href="/admin" style="margin-left: auto; color: #94A3B8;">🔐 Admin</a>
+        {% if session.get('is_admin') %}
+            <a href="/admin" style="margin-left: auto; color: #EF4444;">🔐 Admin Panel</a>
+            <a href="/admin/logout" style="color: #94A3B8;">🚪 Logout</a>
+        {% else %}
+            <a href="/admin" style="margin-left: auto; color: #94A3B8;">🔐 Admin</a>
+        {% endif %}
     </nav>
 
     <!-- ===== IMPORTANT DATES ===== -->
@@ -96,6 +101,12 @@
                                         <a href="{{ att.file_url }}" target="_blank" class="file-name">{{ att.filename }}</a>
                                     </span>
                                     <span class="file-meta">by {{ att.uploader_name or "Anonymous" }}</span>
+                                    {% if session.get('is_admin') %}
+                                        <form action="/admin/delete/attachment/{{ att.id }}" method="post" style="margin: 0;"
+                                              onsubmit="return confirm('⚠️ Delete this attachment permanently?')">
+                                            <button type="submit" class="btn btn-danger btn-sm">🗑️</button>
+                                        </form>
+                                    {% endif %}
                                 </li>
                             {% endfor %}
                         </ul>
@@ -107,6 +118,14 @@
                         <input type="file" name="file" required style="grid-column: span 1;">
                         <button type="submit" class="btn btn-secondary btn-sm" style="grid-column: span 1;">📎 Attach</button>
                     </form>
+
+                    <!-- Admin Delete Date Button -->
+                    {% if session.get('is_admin') %}
+                        <form action="/admin/delete/date/{{ d.id }}" method="post" style="margin-top: 10px;"
+                              onsubmit="return confirm('⚠️ Delete this date and all its attachments permanently?')">
+                            <button type="submit" class="btn btn-danger btn-sm">🗑️ Delete Date</button>
+                        </form>
+                    {% endif %}
                 </div>
                 {% else %}
                     <p class="text-muted">No upcoming dates.</p>
@@ -148,6 +167,12 @@
                                         <a href="{{ att.file_url }}" target="_blank" class="file-name">{{ att.filename }}</a>
                                     </span>
                                     <span class="file-meta">by {{ att.uploader_name or "Anonymous" }}</span>
+                                    {% if session.get('is_admin') %}
+                                        <form action="/admin/delete/attachment/{{ att.id }}" method="post" style="margin: 0;"
+                                              onsubmit="return confirm('⚠️ Delete this attachment permanently?')">
+                                            <button type="submit" class="btn btn-danger btn-sm">🗑️</button>
+                                        </form>
+                                    {% endif %}
                                 </li>
                             {% endfor %}
                         </ul>
@@ -159,6 +184,14 @@
                         <input type="file" name="file" required style="grid-column: span 1;">
                         <button type="submit" class="btn btn-secondary btn-sm" style="grid-column: span 1;">📎 Attach</button>
                     </form>
+
+                    <!-- Admin Delete Date Button -->
+                    {% if session.get('is_admin') %}
+                        <form action="/admin/delete/date/{{ d.id }}" method="post" style="margin-top: 10px;"
+                              onsubmit="return confirm('⚠️ Delete this date and all its attachments permanently?')">
+                            <button type="submit" class="btn btn-danger btn-sm">🗑️ Delete Date</button>
+                        </form>
+                    {% endif %}
                 </div>
                 {% else %}
                     <p class="text-muted">No past dates.</p>

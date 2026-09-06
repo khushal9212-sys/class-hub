@@ -1,40 +1,40 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-    <div class="container">
-        
-        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
-            <a href="/" class="btn btn-secondary">← Back</a>
-            <h1 style="font-size: 28px;">🔐 Admin Dashboard</h1>
-        </div>
+{% extends "base.html" %}
 
-        <!-- Stats Cards -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 32px;">
-            <div class="card" style="text-align: center; padding: 20px;">
-                <div style="font-size: 32px;">📄</div>
-                <div style="font-size: 24px; font-weight: 700;">{{ files|length }}</div>
-                <div style="font-size: 13px; color: #64748B;">Recent Files</div>
-            </div>
-            <div class="card" style="text-align: center; padding: 20px;">
-                <div style="font-size: 32px;">📢</div>
-                <div style="font-size: 24px; font-weight: 700;">{{ announcements|length }}</div>
-                <div style="font-size: 13px; color: #64748B;">Announcements</div>
-            </div>
-            <div class="card" style="text-align: center; padding: 20px;">
-                <div style="font-size: 32px;">📊</div>
-                <div style="font-size: 24px; font-weight: 700;">{{ polls|length }}</div>
-                <div style="font-size: 13px; color: #64748B;">Polls</div>
-            </div>
-        </div>
+{% block title %}Admin Dashboard{% endblock %}
 
-        <!-- Recent Files -->
-        <div class="card">
+{% block content %}
+    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
+        <a href="/" class="btn btn-secondary">← Back to Home</a>
+        <h1 style="font-size: 28px; margin: 0;">🔐 Admin Dashboard</h1>
+        <a href="/admin/logout" class="btn btn-danger" style="margin-left: auto;">🚪 Logout</a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 32px;">
+        <div class="card" style="text-align: center; padding: 20px;">
+            <div style="font-size: 32px;">📄</div>
+            <div style="font-size: 24px; font-weight: 700;">{{ files|length }}</div>
+            <div style="font-size: 13px; color: #64748B;">Recent Files</div>
+        </div>
+        <div class="card" style="text-align: center; padding: 20px;">
+            <div style="font-size: 32px;">📢</div>
+            <div style="font-size: 24px; font-weight: 700;">{{ announcements|length }}</div>
+            <div style="font-size: 13px; color: #64748B;">Announcements</div>
+        </div>
+        <div class="card" style="text-align: center; padding: 20px;">
+            <div style="font-size: 32px;">📊</div>
+            <div style="font-size: 24px; font-weight: 700;">{{ polls|length }}</div>
+            <div style="font-size: 13px; color: #64748B;">Polls</div>
+        </div>
+    </div>
+
+    <!-- ===== FILES SECTION ===== -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             <h3>📄 Recent Files</h3>
+            <span style="font-size: 13px; color: #94A3B8;">{{ files|length }} files</span>
+        </div>
+        {% if files %}
             <ul class="file-list">
                 {% for f in files %}
                     <li class="file-item">
@@ -43,37 +43,124 @@
                             <a href="{{ f.file_url }}" target="_blank" class="file-name">{{ f.filename }}</a>
                         </span>
                         <span class="file-meta">by {{ f.uploader_name or "Anonymous" }} • {{ f.uploaded_at }}</span>
+                        <form action="/admin/delete/file/{{ f.id }}" method="post" style="margin: 0;" 
+                              onsubmit="return confirm('⚠️ Delete this file permanently?\n\nFile: {{ f.filename }}')">
+                            <button type="submit" class="btn btn-danger btn-sm">🗑️ Delete</button>
+                        </form>
                     </li>
                 {% endfor %}
             </ul>
-        </div>
-
-        <!-- Recent Announcements -->
-        <div class="card">
-            <h3>📢 Recent Announcements</h3>
-            {% for a in announcements %}
-                <div style="padding: 10px 0; border-bottom: 1px solid #F1F5F9;">
-                    <strong>{{ a.uploader_name or "Anonymous" }}</strong>
-                    <span style="font-size: 13px; color: #94A3B8;">{{ a.created_at }}</span>
-                    <p style="margin: 4px 0 0 0; font-size: 14px;">{{ a.text }}</p>
-                </div>
-            {% endfor %}
-        </div>
-
-        <!-- Recent Polls -->
-        <div class="card">
-            <h3>📊 Recent Polls</h3>
-            {% for p in polls %}
-                <div style="padding: 10px 0; border-bottom: 1px solid #F1F5F9;">
-                    <strong>{{ p.question }}</strong>
-                    <span style="font-size: 13px; color: #94A3B8;">{{ p.created_at }}</span>
-                    <span style="font-size: 13px; color: #10B981; margin-left: 12px;">
-                        {% if p.is_active %}🟢 Active{% else %}🔴 Closed{% endif %}
-                    </span>
-                </div>
-            {% endfor %}
-        </div>
-
+        {% else %}
+            <p class="text-muted">No files uploaded yet.</p>
+        {% endif %}
     </div>
-</body>
-</html>
+
+    <!-- ===== ANNOUNCEMENTS SECTION ===== -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <h3>📢 Recent Announcements</h3>
+            <span style="font-size: 13px; color: #94A3B8;">{{ announcements|length }} announcements</span>
+        </div>
+        {% if announcements %}
+            {% for a in announcements %}
+                <div style="padding: 12px 0; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <strong>{{ a.uploader_name or "Anonymous" }}</strong>
+                            <span style="font-size: 13px; color: #94A3B8;">{{ a.created_at }}</span>
+                            {% if a.stream_name %}
+                                <span class="subject-tag">{{ a.stream_name }}</span>
+                            {% endif %}
+                        </div>
+                        <p style="margin: 4px 0 0 0; font-size: 14px;">{{ a.text }}</p>
+                        {% if a.file_url %}
+                            <a href="{{ a.file_url }}" target="_blank" class="btn btn-secondary btn-sm" style="margin-top: 4px;">📎 View Attachment</a>
+                        {% endif %}
+                    </div>
+                    <form action="/admin/delete/announcement/{{ a.id }}" method="post" style="margin: 0;"
+                          onsubmit="return confirm('⚠️ Delete this announcement permanently?\n\n"{{ a.text }}"')">
+                        <button type="submit" class="btn btn-danger btn-sm">🗑️ Delete</button>
+                    </form>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-muted">No announcements yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- ===== POLLS SECTION ===== -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <h3>📊 Recent Polls</h3>
+            <span style="font-size: 13px; color: #94A3B8;">{{ polls|length }} polls</span>
+        </div>
+        {% if polls %}
+            {% for p in polls %}
+                <div style="padding: 12px 0; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <strong>{{ p.question }}</strong>
+                            <span style="font-size: 13px; color: #94A3B8;">{{ p.created_at }}</span>
+                            {% if p.is_active %}
+                                <span class="badge" style="background: #10B981; color: white; padding: 2px 10px; border-radius: 12px; font-size: 11px;">🟢 Active</span>
+                            {% else %}
+                                <span class="badge" style="background: #94A3B8; color: white; padding: 2px 10px; border-radius: 12px; font-size: 11px;">🔴 Closed</span>
+                            {% endif %}
+                        </div>
+                        <div style="font-size: 13px; color: #64748B; margin-top: 2px;">
+                            Options: 
+                            {% for opt in p.options %}
+                                {{ opt.option_text }} ({{ opt.vote_count }} votes){% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <form action="/admin/delete/poll/{{ p.id }}" method="post" style="margin: 0;"
+                          onsubmit="return confirm('⚠️ Delete this poll and all its votes permanently?\n\nQuestion: {{ p.question }}')">
+                        <button type="submit" class="btn btn-danger btn-sm">🗑️ Delete</button>
+                    </form>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-muted">No polls created yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- ===== QUICK ACTIONS ===== -->
+    <div class="card">
+        <h3>⚡ Quick Actions</h3>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px;">
+            <a href="/announcements" class="btn btn-secondary">📢 Manage Announcements</a>
+            <a href="/polls" class="btn btn-secondary">📊 Manage Polls</a>
+            <a href="/general" class="btn btn-secondary">📂 Manage Documents</a>
+            <a href="/" class="btn btn-secondary">🏠 Go to Home</a>
+            <a href="/admin/logout" class="btn btn-danger">🚪 Logout</a>
+        </div>
+    </div>
+
+    <!-- ===== DELETE ALL (Danger Zone) ===== -->
+    <div class="card" style="border: 2px solid #EF4444; background: #FEF2F2;">
+        <h3 style="color: #DC2626;">⚠️ Danger Zone</h3>
+        <p style="font-size: 14px; color: #64748B; margin-bottom: 12px;">
+            These actions cannot be undone. Use with extreme caution.
+        </p>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <!-- Delete All Files -->
+            <form action="/admin/delete/all/files" method="post" style="margin: 0;"
+                  onsubmit="return confirm('⚠️⚠️⚠️ DELETE ALL FILES?\n\nThis will permanently delete ALL files from the database and storage. This cannot be undone!')">
+                <button type="submit" class="btn btn-danger">🗑️ Delete All Files</button>
+            </form>
+            
+            <!-- Delete All Polls -->
+            <form action="/admin/delete/all/polls" method="post" style="margin: 0;"
+                  onsubmit="return confirm('⚠️⚠️⚠️ DELETE ALL POLLS?\n\nThis will permanently delete ALL polls and their votes. This cannot be undone!')">
+                <button type="submit" class="btn btn-danger">🗑️ Delete All Polls</button>
+            </form>
+            
+            <!-- Delete All Announcements -->
+            <form action="/admin/delete/all/announcements" method="post" style="margin: 0;"
+                  onsubmit="return confirm('⚠️⚠️⚠️ DELETE ALL ANNOUNCEMENTS?\n\nThis will permanently delete ALL announcements. This cannot be undone!')">
+                <button type="submit" class="btn btn-danger">🗑️ Delete All Announcements</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}
