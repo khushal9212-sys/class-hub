@@ -1,15 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Admin</title>
+    <title>Admin Login</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <h1>🔐 Admin Login</h1>
-    {% if error %}<p style="color:red;">{{ error }}</p>{% endif %}
-    <form method="post">
-        <input type="password" name="password" placeholder="Password" required>
-        <button type="submit">Enter</button>
-    </form>
+    <div class="container" style="max-width: 400px; margin-top: 60px;">
+        <div class="card" style="padding: 40px;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="font-size: 48px; margin-bottom: 8px;">🔐</div>
+                <h1 style="font-size: 24px; margin: 0; color: #0F172A;">Admin Login</h1>
+                <p style="color: #64748B; font-size: 14px; margin-top: 4px;">Enter your admin password</p>
+            </div>
+            
+            {% if error %}
+                <div class="banner" style="border-color: #EF4444; background: #FEF2F2; margin-bottom: 16px;">
+                    <span style="color: #DC2626; font-weight: 500;">❌ {{ error }}</span>
+                </div>
+            {% endif %}
+            
+            <form method="post" action="/admin">
+                <div class="form-group">
+                    <input 
+                        type="password" 
+                        name="password" 
+                        placeholder="Enter admin password" 
+                        required
+                        style="text-align: center; font-size: 16px; padding: 14px;"
+                        autocomplete="off"
+                    >
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 16px;">
+                    🔑 Login
+                </button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 16px;">
+                <a href="/" style="color: #94A3B8; text-decoration: none; font-size: 13px;">← Back to Home</a>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
