@@ -1,12 +1,15 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, abort
 from supabase import create_client
 from functools import wraps
 import uuid
 import hashlib
 from datetime import datetime, date, timedelta
+import re
 
 app = Flask(__name__)
 app.secret_key = "randomtext"  # Change to environment variable in production
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
 SUPABASE_URL = "https://kjasslioidmuxnwctdyg.supabase.co"
 SUPABASE_KEY = "sb_publishable__BzdVERihynzsfzuL6SVHw_7njcjjr6"
@@ -29,6 +32,44 @@ def admin_required(f):
             return redirect(url_for('admin'))
         return f(*args, **kwargs)
     return decorated_function
+
+# ===== HELPER FUNCTION TO DELETE FROM STORAGE =====
+def delete_from_storage(file_url):
+    """Extract path from URL and delete from Supabase storage"""
+    if not file_url:
+        return False
+    
+    try:
+        # Method 1: Check for class-files in URL
+        if "class-files" in file_url:
+            # Extract everything after "class-files/"
+            parts = file_url.split("class-files/")
+            if len(parts) > 1:
+                storage_path = parts[1]
+                # Clean up the path (remove query parameters if any)
+                storage_path = storage_path.split("?")[0]
+                print(f"🗑️ Deleting from storage: {storage_path}")
+                supabase.storage.from_(BUCKET).remove([storage_path])
+                return True
+        
+        # Method 2: Alternative URL format
+        elif "/storage/v1/object/public/" in file_url:
+            parts = file_url.split("/storage/v1/object/public/")
+            if len(parts) > 1:
+                # Remove bucket name from path if present
+                path = parts[1]
+                if path.startswith(f"{BUCKET}/"):
+                    path = path[len(BUCKET)+1:]
+                path = path.split("?")[0]
+                print(f"🗑️ Deleting from storage: {path}")
+                supabase.storage.from_(BUCKET).remove([path])
+                return True
+        
+        return False
+    
+    except Exception as e:
+        print(f"❌ Storage deletion error: {e}")
+        return False
 
 # ===== HOME ROUTE =====
 @app.route("/")
@@ -274,9 +315,11 @@ def admin():
         if request.form.get("password") != ADMIN_PASSWORD:
             return render_template("admin_login.html", error="Wrong password")
         
-        # Set admin session
+        # Set admin session - THIS IS THE KEY FIX
+        session.clear()  # Clear any old session data
         session['is_admin'] = True
         session.permanent = True
+        session.modified = True
         
         return render_template("admin.html",
             files=supabase.table("files").select("*").order("uploaded_at", desc=True).limit(20).execute().data,
@@ -286,10 +329,10 @@ def admin():
 
 @app.route("/admin/logout")
 def admin_logout():
-    session.pop('is_admin', None)
+    session.clear()
     return redirect(url_for('home'))
 
-# ===== ADMIN DELETE ROUTES =====
+# ===== ADMIN DELETE ROUTES - FIXED =====
 
 @app.route("/admin/delete/file/<int:file_id>", methods=["POST"])
 @admin_required
@@ -301,93 +344,81 @@ def admin_delete_file(file_id):
             return "File not found", 404
         
         file = file_data[0]
+        filename = file.get('filename', 'Unknown')
+        file_url = file.get('file_url', '')
         
-        # Delete from storage - FIXED
-        try:
-            file_url = file.get("file_url", "")
-            if file_url:
-                # Try different extraction methods
-                if "/class-files/" in file_url:
-                    storage_path = file_url.split("/class-files/")[1]
-                elif "/storage/v1/object/public/" in file_url:
-                    # Alternative URL format
-                    parts = file_url.split("/storage/v1/object/public/")
-                    if len(parts) > 1:
-                        storage_path = parts[1].split("/", 1)[1] if "/" in parts[1] else parts[1]
-                    else:
-                        storage_path = None
-                else:
-                    storage_path = None
-                
-                if storage_path:
-                    supabase.storage.from_(BUCKET).remove([storage_path])
-                    print(f"✅ File removed from storage: {storage_path}")
-                else:
-                    print("⚠️ Could not extract storage path")
-        except Exception as e:
-            print(f"⚠️ Storage delete error (continuing): {e}")
+        print(f"🗑️ Deleting file: {filename} (ID: {file_id})")
+        print(f"📎 URL: {file_url}")
         
-        # Always delete from database
+        # Delete from storage using helper function
+        storage_deleted = delete_from_storage(file_url)
+        if storage_deleted:
+            print(f"✅ File deleted from storage: {filename}")
+        else:
+            print(f"⚠️ Could not delete from storage, but continuing with database deletion")
+        
+        # Delete from database
         supabase.table("files").delete().eq("id", file_id).execute()
-        print(f"✅ File deleted from database: {file['filename']}")
+        print(f"✅ File deleted from database: {filename}")
         
+        # Redirect back to the page they came from
         return redirect(request.referrer or url_for("admin"))
     
     except Exception as e:
         print(f"❌ Delete error: {e}")
-        return redirect(url_for("admin"))
+        return redirect(request.referrer or url_for("admin"))
 
 @app.route("/admin/delete/announcement/<int:announcement_id>", methods=["POST"])
 @admin_required
 def admin_delete_announcement(announcement_id):
     try:
         announcement = supabase.table("announcements").select("*").eq("id", announcement_id).execute().data
-        if announcement and announcement[0].get("file_url"):
-            try:
-                file_url = announcement[0]["file_url"]
-                if "/class-files/" in file_url:
-                    storage_path = file_url.split("/class-files/")[1]
-                    supabase.storage.from_(BUCKET).remove([storage_path])
-            except Exception as e:
-                print(f"Storage delete error: {e}")
+        if announcement:
+            file_url = announcement[0].get("file_url")
+            if file_url:
+                delete_from_storage(file_url)
         
         supabase.table("announcements").delete().eq("id", announcement_id).execute()
         return redirect(request.referrer or url_for("announcements"))
     except Exception as e:
-        print(f"Delete error: {e}")
-        return redirect(url_for("admin"))
+        print(f"❌ Delete error: {e}")
+        return redirect(request.referrer or url_for("admin"))
 
 @app.route("/admin/delete/poll/<int:poll_id>", methods=["POST"])
 @admin_required
 def admin_delete_poll(poll_id):
     try:
+        # Delete poll options first
         supabase.table("poll_options").delete().eq("poll_id", poll_id).execute()
+        # Delete poll
         supabase.table("polls").delete().eq("id", poll_id).execute()
         return redirect(request.referrer or url_for("polls"))
     except Exception as e:
-        print(f"Delete error: {e}")
-        return redirect(url_for("admin"))
+        print(f"❌ Delete error: {e}")
+        return redirect(request.referrer or url_for("admin"))
 
 @app.route("/admin/delete/date/<int:date_id>", methods=["POST"])
 @admin_required
 def admin_delete_date(date_id):
     try:
         date_data = supabase.table("important_dates").select("*").eq("id", date_id).execute().data
-        if date_data and date_data[0].get("file_url"):
-            try:
-                file_url = date_data[0]["file_url"]
-                if "/class-files/" in file_url:
-                    storage_path = file_url.split("/class-files/")[1]
-                    supabase.storage.from_(BUCKET).remove([storage_path])
-            except Exception as e:
-                print(f"Storage delete error: {e}")
+        if date_data:
+            file_url = date_data[0].get("file_url")
+            if file_url:
+                delete_from_storage(file_url)
+        
+        # Delete attachments first
+        attachments = supabase.table("date_attachments").select("*").eq("date_id", date_id).execute().data
+        for att in attachments:
+            if att.get("file_url"):
+                delete_from_storage(att["file_url"])
         
         supabase.table("date_attachments").delete().eq("date_id", date_id).execute()
         supabase.table("important_dates").delete().eq("id", date_id).execute()
         return redirect(request.referrer or url_for("home"))
     except Exception as e:
-        print(f"Delete error: {e}")
-        return redirect(url_for("admin"))
+        print(f"❌ Delete error: {e}")
+        return redirect(request.referrer or url_for("admin"))
 
 @app.route("/admin/delete/attachment/<int:attachment_id>", methods=["POST"])
 @admin_required
@@ -395,19 +426,13 @@ def admin_delete_attachment(attachment_id):
     try:
         attachment = supabase.table("date_attachments").select("*").eq("id", attachment_id).execute().data
         if attachment and attachment[0].get("file_url"):
-            try:
-                file_url = attachment[0]["file_url"]
-                if "/class-files/" in file_url:
-                    storage_path = file_url.split("/class-files/")[1]
-                    supabase.storage.from_(BUCKET).remove([storage_path])
-            except Exception as e:
-                print(f"Storage delete error: {e}")
+            delete_from_storage(attachment[0]["file_url"])
         
         supabase.table("date_attachments").delete().eq("id", attachment_id).execute()
         return redirect(request.referrer or url_for("home"))
     except Exception as e:
-        print(f"Delete error: {e}")
-        return redirect(url_for("admin"))
+        print(f"❌ Delete error: {e}")
+        return redirect(request.referrer or url_for("admin"))
 
 # ===== BULK DELETE ROUTES =====
 
@@ -418,18 +443,14 @@ def admin_delete_all_files():
         files = supabase.table("files").select("*").execute().data
         
         for file in files:
-            try:
-                file_url = file.get("file_url", "")
-                if file_url and "/class-files/" in file_url:
-                    storage_path = file_url.split("/class-files/")[1]
-                    supabase.storage.from_(BUCKET).remove([storage_path])
-            except Exception as e:
-                print(f"Storage delete error: {e}")
+            file_url = file.get("file_url")
+            if file_url:
+                delete_from_storage(file_url)
         
         supabase.table("files").delete().neq("id", 0).execute()
         return redirect(url_for("admin"))
     except Exception as e:
-        print(f"Delete error: {e}")
+        print(f"❌ Delete error: {e}")
         return redirect(url_for("admin"))
 
 @app.route("/admin/delete/all/polls", methods=["POST"])
@@ -444,7 +465,7 @@ def admin_delete_all_polls():
         supabase.table("polls").delete().neq("id", 0).execute()
         return redirect(url_for("admin"))
     except Exception as e:
-        print(f"Delete error: {e}")
+        print(f"❌ Delete error: {e}")
         return redirect(url_for("admin"))
 
 @app.route("/admin/delete/all/announcements", methods=["POST"])
@@ -454,19 +475,14 @@ def admin_delete_all_announcements():
         announcements = supabase.table("announcements").select("*").execute().data
         
         for announcement in announcements:
-            if announcement.get("file_url"):
-                try:
-                    file_url = announcement["file_url"]
-                    if "/class-files/" in file_url:
-                        storage_path = file_url.split("/class-files/")[1]
-                        supabase.storage.from_(BUCKET).remove([storage_path])
-                except Exception as e:
-                    print(f"Storage delete error: {e}")
+            file_url = announcement.get("file_url")
+            if file_url:
+                delete_from_storage(file_url)
         
         supabase.table("announcements").delete().neq("id", 0).execute()
         return redirect(url_for("admin"))
     except Exception as e:
-        print(f"Delete error: {e}")
+        print(f"❌ Delete error: {e}")
         return redirect(url_for("admin"))
 
 if __name__ == "__main__":
