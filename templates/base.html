@@ -9,6 +9,16 @@
 </head>
 <body>
     <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="banner" style="margin-bottom: 16px; {% if category == 'error' %}border-color: #EF4444; background: #FEF2F2;{% else %}border-color: #10B981; background: #F0FDF4;{% endif %}">
+                        <span style="font-size: 18px;">{{ '⚠️' if category == 'error' else '✅' }}</span>
+                        <span style="{% if category == 'error' %}color: #DC2626;{% else %}color: #16A34A;{% endif %} font-weight: 500;">{{ message }}</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
         {% block content %}{% endblock %}
     </div>
     {% block scripts %}{% endblock %}

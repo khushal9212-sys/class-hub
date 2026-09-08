@@ -1,18 +1,42 @@
-from flask import Flask, render_template, request, redirect, url_for, session, abort
+from flask import Flask, render_template, request, redirect, url_for, session, abort, flash
 from supabase import create_client
 from functools import wraps
 import uuid
 import hashlib
+import os
 from datetime import datetime, date, timedelta
 import re
+
+# Load local .env (for development). On real hosts, set these as real env vars.
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 app = Flask(__name__)
 app.secret_key = "randomtext"
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
 SUPABASE_URL = "https://kjasslioidmuxnwctdyg.supabase.co"
+# Public / publishable key — safe for reads (still subject to Row Level Security).
 SUPABASE_KEY = "sb_publishable__BzdVERihynzsfzuL6SVHw_7njcjjr6"
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# Service-role (secret) key — REQUIRED for admin deletes/writes, because the
+# publishable key runs as the `anon` role and RLS blocks DELETE/UPDATE.
+# NEVER hard-code this in the repo. Set it as an environment variable on your
+# host (Render / Railway / Heroku / etc.), e.g. SUPABASE_SERVICE_KEY=sb_secret_...
+SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SECRET_KEY") or ""
+
+if SUPABASE_SERVICE_KEY:
+    # Admin client: service role bypasses Row Level Security, so deletes work.
+    admin_supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+else:
+    # Fallback so the app still boots. Admin deletes will be blocked by RLS
+    # until the service key is configured — we surface that clearly to the admin.
+    admin_supabase = supabase
+    print("⚠️  SUPABASE_SERVICE_KEY not set — admin deletes will be blocked by RLS!")
 
 BUCKET = "class-files"
 ADMIN_PASSWORD = "khushal9212"
@@ -28,6 +52,11 @@ def is_admin():
     """Simple check if user is admin"""
     return session.get('is_admin', False)
 
+# Make the service-key status available to every template.
+@app.context_processor
+def inject_service_key_status():
+    return {"service_key_missing": not SUPABASE_SERVICE_KEY}
+
 # ===== HELPER FUNCTION TO DELETE FROM STORAGE =====
 def delete_from_storage(file_url):
     if not file_url:
@@ -38,7 +67,7 @@ def delete_from_storage(file_url):
             if len(parts) > 1:
                 storage_path = parts[1].split("?")[0]
                 print(f"🗑️ Deleting from storage: {storage_path}")
-                supabase.storage.from_(BUCKET).remove([storage_path])
+                admin_supabase.storage.from_(BUCKET).remove([storage_path])
                 return True
         return False
     except Exception as e:
@@ -282,7 +311,7 @@ def admin_delete_file(file_id):
     print(f"✅ Admin confirmed. Deleting file {file_id}")
     
     try:
-        file_data = supabase.table("files").select("*").eq("id", file_id).execute().data
+        file_data = admin_supabase.table("files").select("*").eq("id", file_id).execute().data
         if not file_data:
             return "File not found", 404
         
@@ -296,13 +325,15 @@ def admin_delete_file(file_id):
         delete_from_storage(file_url)
         
         # Delete from database
-        supabase.table("files").delete().eq("id", file_id).execute()
+        admin_supabase.table("files").delete().eq("id", file_id).execute()
         print(f"✅ File deleted: {filename}")
+        flash(f"Deleted file: {filename}", "success")
         
         return redirect(request.referrer or url_for("admin"))
     
     except Exception as e:
         print(f"❌ Delete error: {e}")
+        flash(f"Could not delete file: {e}", "error")
         return redirect(request.referrer or url_for("admin"))
 
 @app.route("/admin/delete/announcement/<int:announcement_id>", methods=["POST"])
@@ -311,16 +342,18 @@ def admin_delete_announcement(announcement_id):
         return redirect(url_for('admin'))
     
     try:
-        announcement = supabase.table("announcements").select("*").eq("id", announcement_id).execute().data
+        announcement = admin_supabase.table("announcements").select("*").eq("id", announcement_id).execute().data
         if announcement:
             file_url = announcement[0].get("file_url")
             if file_url:
                 delete_from_storage(file_url)
         
-        supabase.table("announcements").delete().eq("id", announcement_id).execute()
+        admin_supabase.table("announcements").delete().eq("id", announcement_id).execute()
+        flash("Deleted announcement", "success")
         return redirect(request.referrer or url_for("announcements"))
     except Exception as e:
         print(f"❌ Delete error: {e}")
+        flash(f"Could not delete announcement: {e}", "error")
         return redirect(request.referrer or url_for("admin"))
 
 @app.route("/admin/delete/poll/<int:poll_id>", methods=["POST"])
@@ -329,11 +362,13 @@ def admin_delete_poll(poll_id):
         return redirect(url_for('admin'))
     
     try:
-        supabase.table("poll_options").delete().eq("poll_id", poll_id).execute()
-        supabase.table("polls").delete().eq("id", poll_id).execute()
+        admin_supabase.table("poll_options").delete().eq("poll_id", poll_id).execute()
+        admin_supabase.table("polls").delete().eq("id", poll_id).execute()
+        flash("Deleted poll", "success")
         return redirect(request.referrer or url_for("polls"))
     except Exception as e:
         print(f"❌ Delete error: {e}")
+        flash(f"Could not delete poll: {e}", "error")
         return redirect(request.referrer or url_for("admin"))
 
 @app.route("/admin/delete/date/<int:date_id>", methods=["POST"])
@@ -342,22 +377,24 @@ def admin_delete_date(date_id):
         return redirect(url_for('admin'))
     
     try:
-        date_data = supabase.table("important_dates").select("*").eq("id", date_id).execute().data
+        date_data = admin_supabase.table("important_dates").select("*").eq("id", date_id).execute().data
         if date_data:
             file_url = date_data[0].get("file_url")
             if file_url:
                 delete_from_storage(file_url)
         
-        attachments = supabase.table("date_attachments").select("*").eq("date_id", date_id).execute().data
+        attachments = admin_supabase.table("date_attachments").select("*").eq("date_id", date_id).execute().data
         for att in attachments:
             if att.get("file_url"):
                 delete_from_storage(att["file_url"])
         
-        supabase.table("date_attachments").delete().eq("date_id", date_id).execute()
-        supabase.table("important_dates").delete().eq("id", date_id).execute()
+        admin_supabase.table("date_attachments").delete().eq("date_id", date_id).execute()
+        admin_supabase.table("important_dates").delete().eq("id", date_id).execute()
+        flash("Deleted date and its attachments", "success")
         return redirect(request.referrer or url_for("home"))
     except Exception as e:
         print(f"❌ Delete error: {e}")
+        flash(f"Could not delete date: {e}", "error")
         return redirect(request.referrer or url_for("admin"))
 
 @app.route("/admin/delete/attachment/<int:attachment_id>", methods=["POST"])
@@ -366,14 +403,16 @@ def admin_delete_attachment(attachment_id):
         return redirect(url_for('admin'))
     
     try:
-        attachment = supabase.table("date_attachments").select("*").eq("id", attachment_id).execute().data
+        attachment = admin_supabase.table("date_attachments").select("*").eq("id", attachment_id).execute().data
         if attachment and attachment[0].get("file_url"):
             delete_from_storage(attachment[0]["file_url"])
         
-        supabase.table("date_attachments").delete().eq("id", attachment_id).execute()
+        admin_supabase.table("date_attachments").delete().eq("id", attachment_id).execute()
+        flash("Deleted attachment", "success")
         return redirect(request.referrer or url_for("home"))
     except Exception as e:
         print(f"❌ Delete error: {e}")
+        flash(f"Could not delete attachment: {e}", "error")
         return redirect(request.referrer or url_for("admin"))
 
 # ===== BULK DELETE =====
@@ -384,15 +423,16 @@ def admin_delete_all_files():
         return redirect(url_for('admin'))
     
     try:
-        files = supabase.table("files").select("*").execute().data
+        files = admin_supabase.table("files").select("*").execute().data
         for file in files:
             file_url = file.get("file_url")
             if file_url:
                 delete_from_storage(file_url)
-        supabase.table("files").delete().neq("id", 0).execute()
+        admin_supabase.table("files").delete().neq("id", 0).execute()
         return redirect(url_for("admin"))
     except Exception as e:
         print(f"❌ Delete error: {e}")
+        flash(f"Could not delete all files: {e}", "error")
         return redirect(url_for("admin"))
 
 @app.route("/admin/delete/all/polls", methods=["POST"])
@@ -401,13 +441,14 @@ def admin_delete_all_polls():
         return redirect(url_for('admin'))
     
     try:
-        polls = supabase.table("polls").select("*").execute().data
+        polls = admin_supabase.table("polls").select("*").execute().data
         for poll in polls:
-            supabase.table("poll_options").delete().eq("poll_id", poll["id"]).execute()
-        supabase.table("polls").delete().neq("id", 0).execute()
+            admin_supabase.table("poll_options").delete().eq("poll_id", poll["id"]).execute()
+        admin_supabase.table("polls").delete().neq("id", 0).execute()
         return redirect(url_for("admin"))
     except Exception as e:
         print(f"❌ Delete error: {e}")
+        flash(f"Could not delete all polls: {e}", "error")
         return redirect(url_for("admin"))
 
 @app.route("/admin/delete/all/announcements", methods=["POST"])
@@ -416,15 +457,16 @@ def admin_delete_all_announcements():
         return redirect(url_for('admin'))
     
     try:
-        announcements = supabase.table("announcements").select("*").execute().data
+        announcements = admin_supabase.table("announcements").select("*").execute().data
         for announcement in announcements:
             file_url = announcement.get("file_url")
             if file_url:
                 delete_from_storage(file_url)
-        supabase.table("announcements").delete().neq("id", 0).execute()
+        admin_supabase.table("announcements").delete().neq("id", 0).execute()
         return redirect(url_for("admin"))
     except Exception as e:
         print(f"❌ Delete error: {e}")
+        flash(f"Could not delete all announcements: {e}", "error")
         return redirect(url_for("admin"))
 
 if __name__ == "__main__":

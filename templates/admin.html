@@ -12,6 +12,16 @@
         {% endif %}
     </div>
 
+    {% if service_key_missing %}
+        <div class="banner" style="border-color: #F59E0B; background: #FFFBEB; margin-bottom: 16px;">
+            <span style="font-size: 20px;">⚠️</span>
+            <span style="color: #B45309; font-weight: 500;">
+                Admin deletes are blocked until you set the <code>SUPABASE_SERVICE_KEY</code> environment variable
+                (your Supabase <strong>service_role</strong> key) on the host, then restart the app.
+            </span>
+        </div>
+    {% endif %}
+
     <!-- Stats Cards -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 32px;">
         <div class="card" style="text-align: center; padding: 20px;">
