@@ -28,7 +28,14 @@
                         <option value="{{ stream.id }}">{{ stream.name }}</option>
                     {% endfor %}
                 </select>
-                <input type="file" name="file">
+                <div class="file-input-wrapper">
+                    <input type="file" name="file" id="announcementFile" onchange="updateFileName(this)">
+                    <label for="announcementFile" class="file-label">
+                        <span class="file-icon">📎</span>
+                        Attach File
+                    </label>
+                    <span class="file-name">No file chosen</span>
+                </div>
                 <button type="submit" class="btn btn-primary">📤 Post</button>
             </div>
         </form>

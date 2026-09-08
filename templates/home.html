@@ -23,7 +23,6 @@
 
     <!-- ===== NAVIGATION ===== -->
     <nav class="nav-bar fade-in">
-        <a href="/announcements">📢 Announcements</a>
         <a href="/polls">📊 Polls</a>
         <a href="/general">📂 General Documents</a>
         {% if session.get('is_admin') %}
@@ -62,7 +61,14 @@
                     {% endfor %}
                 </select>
                 <input type="text" name="description" placeholder="Extra note (optional)">
-                <input type="file" name="file">
+                <div class="file-input-wrapper">
+                    <input type="file" name="file" id="dateFile" onchange="updateFileName(this)">
+                    <label for="dateFile" class="file-label">
+                        <span class="file-icon">📎</span>
+                        Attach File
+                    </label>
+                    <span class="file-name">No file chosen</span>
+                </div>
                 <button type="submit" class="btn btn-primary">➕ Add Date</button>
             </div>
         </form>
@@ -115,7 +121,14 @@
                     <!-- Attach Form -->
                     <form action="/dates/{{ d.id }}/attach" method="post" enctype="multipart/form-data" class="form-row" style="margin-top: 10px;">
                         <input type="text" name="uploader_name" placeholder="Your name (optional)" style="grid-column: span 1;">
-                        <input type="file" name="file" required style="grid-column: span 1;">
+                        <div class="file-input-wrapper" style="grid-column: span 1;">
+                            <input type="file" name="file" id="attachFile{{ d.id }}" onchange="updateFileName(this)" required>
+                            <label for="attachFile{{ d.id }}" class="file-label">
+                                <span class="file-icon">📎</span>
+                                Attach
+                            </label>
+                            <span class="file-name">No file</span>
+                        </div>
                         <button type="submit" class="btn btn-secondary btn-sm" style="grid-column: span 1;">📎 Attach</button>
                     </form>
 
@@ -181,7 +194,14 @@
                     <!-- Attach Form -->
                     <form action="/dates/{{ d.id }}/attach" method="post" enctype="multipart/form-data" class="form-row" style="margin-top: 10px;">
                         <input type="text" name="uploader_name" placeholder="Your name (optional)" style="grid-column: span 1;">
-                        <input type="file" name="file" required style="grid-column: span 1;">
+                        <div class="file-input-wrapper" style="grid-column: span 1;">
+                            <input type="file" name="file" id="attachFilePast{{ d.id }}" onchange="updateFileName(this)" required>
+                            <label for="attachFilePast{{ d.id }}" class="file-label">
+                                <span class="file-icon">📎</span>
+                                Attach
+                            </label>
+                            <span class="file-name">No file</span>
+                        </div>
                         <button type="submit" class="btn btn-secondary btn-sm" style="grid-column: span 1;">📎 Attach</button>
                     </form>
 

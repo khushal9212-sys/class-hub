@@ -6,7 +6,6 @@
     <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
         <a href="/" class="btn btn-secondary">← Back to Home</a>
         <h1 style="font-size: 28px; margin: 0;">🔐 Admin Dashboard</h1>
-        <!-- FIXED: Only show logout if admin is logged in -->
         {% if session.get('is_admin') %}
             <a href="/admin/logout" class="btn btn-danger" style="margin-left: auto;" onclick="return confirm('Logout?')">🚪 Logout</a>
         {% endif %}

@@ -28,7 +28,14 @@
             <!-- Upload Form -->
             <form action="/subject/{{ stream.id }}/upload/{{ ft }}" method="post" enctype="multipart/form-data" class="form-row">
                 <input type="text" name="uploader_name" placeholder="Your name (optional)">
-                <input type="file" name="file" required>
+                <div class="file-input-wrapper">
+                    <input type="file" name="file" id="fileInput{{ ft }}" onchange="updateFileName(this)" required>
+                    <label for="fileInput{{ ft }}" class="file-label">
+                        <span class="file-icon">📎</span>
+                        Choose File
+                    </label>
+                    <span class="file-name">No file chosen</span>
+                </div>
                 <button type="submit" class="btn btn-primary">⬆ Upload</button>
             </form>
 
