@@ -27,8 +27,8 @@ def file_icon(filename):
 app.secret_key = "randomtext"
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
-SUPABASE_URL = "https://kjasslioidmuxnwctdyg.supabase.co"
-SUPABASE_KEY = "sb_publishable__BzdVERihynzsfzuL6SVHw_7njcjjr6"
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Separate admin client using the SECRET service_role key.
