@@ -38,7 +38,7 @@ SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
 supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY) if SUPABASE_SERVICE_KEY else supabase
 
 BUCKET = "class-files"
-ADMIN_PASSWORD = "khushal9212"
+ADMIN_PASSWORD = os.environ.get("ADMIN_variable")
 
 FOLDER_TYPES = ["general", "notes", "syllabus", "question_paper", "answer"]
 FOLDER_LABELS = {
