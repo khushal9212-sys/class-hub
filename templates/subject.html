@@ -3,76 +3,159 @@
 {% block title %}{{ stream.name }}{% endblock %}
 
 {% block content %}
-    <!-- Back button & Header -->
-    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
-        <a href="/" class="btn btn-secondary">← Back</a>
-        <h1 style="font-size: 28px; color: #0F172A; margin: 0;">📘 {{ stream.name }}</h1>
+
+    <!-- ===== HEADER ===== -->
+    <div class="page-header fade-in">
+        <a href="/" class="btn btn-secondary btn-sm">← Back</a>
+        <div class="page-header-title">
+            <span class="page-header-icon">📘</span>
+            <h1>{{ stream.name }}</h1>
+        </div>
         {% if session.get('is_admin') %}
-            <span style="background: #EF4444; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: auto;">🔐 Admin Mode</span>
+            <span class="admin-badge">🔐 Admin Mode</span>
         {% endif %}
     </div>
 
-    <!-- Folder Sections -->
-    {% for ft in folder_types %}
-    <div class="card fade-in" style="padding: 0; overflow: hidden;">
-        <div onclick="toggleFolder('{{ ft }}')" style="padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; border-bottom: 1px solid #E2E8F0;">
-            <div style="display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 17px;">
-                <span>📁</span>
+    <!-- ===== SUMMARY STRIP ===== -->
+    <div class="summary-strip fade-in">
+        {% for ft in folder_types %}
+            <a href="#folder-{{ ft }}" class="summary-chip">
                 <span>{{ folder_labels[ft] }}</span>
-                <span style="font-size: 13px; font-weight: 400; color: #94A3B8;">({{ folders[ft]|length }} files)</span>
-            </div>
-            <span style="font-size: 18px; color: #94A3B8;" id="arrow-{{ ft }}">▼</span>
-        </div>
-        
-        <div id="{{ ft }}" style="display: none; padding: 20px;">
-            <!-- Upload Form -->
-            <form action="/subject/{{ stream.id }}/upload/{{ ft }}" method="post" enctype="multipart/form-data" class="form-row">
-                <input type="text" name="uploader_name" placeholder="Your name (optional)">
-                <div class="file-input-wrapper">
-                    <input type="file" name="file" id="fileInput{{ ft }}" onchange="updateFileName(this)" required>
-                    <label for="fileInput{{ ft }}" class="file-label">
-                        <span class="file-icon">📎</span>
-                        Choose File
-                    </label>
-                    <span class="file-name">No file chosen</span>
-                </div>
-                <button type="submit" class="btn btn-primary">⬆ Upload</button>
-            </form>
-
-            <!-- File List -->
-            <ul class="file-list" style="margin-top: 12px;">
-                {% for f in folders[ft] %}
-                    <li class="file-item">
-                        <span class="file-info">
-                            <span class="file-icon">📄</span>
-                            <a href="{{ f.file_url }}" target="_blank" class="file-name">{{ f.filename }}</a>
-                        </span>
-                        <span class="file-meta">by {{ f.uploader_name or "Anonymous" }}</span>
-                        {% if session.get('is_admin') %}
-                            <form action="/admin/delete/file/{{ f.id }}" method="post" style="margin: 0;"
-                                  onsubmit="return confirm('⚠️ Delete this file permanently?\n\nFile: {{ f.filename }}')">
-                                <button type="submit" class="btn btn-danger btn-sm">🗑️ Delete</button>
-                            </form>
-                        {% endif %}
-                    </li>
-                {% else %}
-                    <p class="text-muted">No files in this folder yet.</p>
-                {% endfor %}
-            </ul>
-        </div>
+                <span class="summary-count">{{ folders[ft]|length }}</span>
+            </a>
+        {% endfor %}
     </div>
+
+    <!-- ===== FOLDER SECTIONS ===== -->
+    {% for ft in folder_types %}
+    <section class="folder-card fade-in" id="folder-{{ ft }}">
+
+        <!-- Folder Header -->
+        <header class="folder-header">
+            <div class="folder-title">
+                <span class="folder-icon">📁</span>
+                <h2>{{ folder_labels[ft] }}</h2>
+                <span class="folder-count">{{ folders[ft]|length }} file{{ '' if folders[ft]|length == 1 else 's' }}</span>
+            </div>
+            <div class="folder-actions">
+                <button type="button"
+                        class="btn btn-primary btn-sm"
+                        onclick="toggleUpload('{{ ft }}')"
+                        id="uploadBtn-{{ ft }}">
+                    ➕ Add File
+                </button>
+                <button type="button"
+                        class="btn btn-secondary btn-sm collapse-btn"
+                        onclick="toggleFolder('{{ ft }}')"
+                        id="collapseBtn-{{ ft }}">
+                    <span class="arrow">▾</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Upload Panel (hidden by default) -->
+        <div id="upload-{{ ft }}" class="upload-panel" hidden>
+            <form action="/subject/{{ stream.id }}/upload/{{ ft }}"
+                  method="post"
+                  enctype="multipart/form-data"
+                  class="upload-form">
+
+                <div class="upload-form-field">
+                    <label>Your name (optional)</label>
+                    <input type="text" name="uploader_name" placeholder="e.g. Rahul">
+                </div>
+
+                <div class="upload-form-field">
+                    <label>File</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" name="file" id="fileInput{{ ft }}"
+                               onchange="updateFileName(this)" required>
+                        <label for="fileInput{{ ft }}" class="file-label">
+                            <span class="file-icon">📎</span>
+                            <span>Choose File</span>
+                        </label>
+                        <span class="file-name">No file chosen</span>
+                    </div>
+                </div>
+
+                <div class="upload-form-buttons">
+                    <button type="submit" class="btn btn-primary">⬆ Upload</button>
+                    <button type="button" class="btn btn-secondary" onclick="toggleUpload('{{ ft }}')">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- File List -->
+        <div class="folder-content" id="content-{{ ft }}">
+            {% if folders[ft] %}
+                <ul class="file-list">
+                    {% for f in folders[ft] %}
+                        <li class="file-item">
+                            <div class="file-info">
+                                <span class="file-icon">{{ file_icon(f.filename) }}</span>
+                                <div class="file-details">
+                                    <a href="{{ f.file_url }}" target="_blank" class="file-name">
+                                        {{ f.filename }}
+                                    </a>
+                                    <span class="file-meta">
+                                        by {{ f.uploader_name or "Anonymous" }}
+                                        {% if f.uploaded_at %} • {{ f.uploaded_at[:10] }}{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="file-actions">
+                                <a href="{{ f.file_url }}" target="_blank" class="btn btn-secondary btn-sm">Open</a>
+                                {% if session.get('is_admin') %}
+                                    <form action="/admin/delete/file/{{ f.id }}" method="post"
+                                          onsubmit="return confirm('⚠️ Delete this file permanently?\n\n{{ f.filename }}')">
+                                        <button type="submit" class="btn btn-danger btn-sm">🗑️</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <p class="empty-state-title">No files yet</p>
+                    <p class="empty-state-text">Be the first to add a {{ folder_labels[ft]|lower }} file.</p>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="toggleUpload('{{ ft }}')">
+                        ➕ Add File
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </section>
     {% endfor %}
 
     <script>
-        function toggleFolder(id) {
-            var el = document.getElementById(id);
-            var arrow = document.getElementById('arrow-' + id);
-            if (el.style.display === "none") {
-                el.style.display = "block";
-                arrow.textContent = "▲";
+        function toggleUpload(ft) {
+            const panel = document.getElementById('upload-' + ft);
+            const btn = document.getElementById('uploadBtn-' + ft);
+            const isOpen = !panel.hasAttribute('hidden');
+            if (isOpen) {
+                panel.setAttribute('hidden', '');
+                btn.innerHTML = '➕ Add File';
+                btn.classList.remove('btn-active');
             } else {
-                el.style.display = "none";
-                arrow.textContent = "▼";
+                panel.removeAttribute('hidden');
+                btn.innerHTML = '✕ Close';
+                btn.classList.add('btn-active');
+                panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function toggleFolder(ft) {
+            const content = document.getElementById('content-' + ft);
+            const arrow = document.querySelector('#collapseBtn-' + ft + ' .arrow');
+            const collapsed = content.style.display === 'none';
+            if (collapsed) {
+                content.style.display = '';
+                arrow.textContent = '▾';
+            } else {
+                content.style.display = 'none';
+                arrow.textContent = '▸';
             }
         }
     </script>

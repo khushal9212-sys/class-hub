@@ -8,6 +8,22 @@ from datetime import datetime, date, timedelta
 import re
 
 app = Flask(__name__)
+@app.template_global()
+def file_icon(filename):
+    if not filename:
+        return "📄"
+    ext = filename.rsplit(".", 1)[-1].lower()
+    return {
+        "pdf": "📕",
+        "doc": "📘", "docx": "📘",
+        "ppt": "📙", "pptx": "📙",
+        "xls": "📗", "xlsx": "📗",
+        "zip": "🗜️", "rar": "🗜️",
+        "jpg": "🖼️", "jpeg": "🖼️", "png": "🖼️", "gif": "🖼️",
+        "mp4": "🎬", "mov": "🎬", "avi": "🎬",
+        "mp3": "🎵", "wav": "🎵",
+        "txt": "📝",
+    }.get(ext, "📄")
 app.secret_key = "randomtext"
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
