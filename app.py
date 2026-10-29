@@ -11,19 +11,19 @@ app = Flask(__name__)
 @app.template_global()
 def file_icon(filename):
     if not filename:
-        return "📄"
+        return "FILE"
     ext = filename.rsplit(".", 1)[-1].lower()
     return {
-        "pdf": "📕",
-        "doc": "📘", "docx": "📘",
-        "ppt": "📙", "pptx": "📙",
-        "xls": "📗", "xlsx": "📗",
-        "zip": "🗜️", "rar": "🗜️",
-        "jpg": "🖼️", "jpeg": "🖼️", "png": "🖼️", "gif": "🖼️",
-        "mp4": "🎬", "mov": "🎬", "avi": "🎬",
-        "mp3": "🎵", "wav": "🎵",
-        "txt": "📝",
-    }.get(ext, "📄")
+        "pdf": "PDF",
+        "doc": "DOC", "docx": "DOC",
+        "ppt": "PPT", "pptx": "PPT",
+        "xls": "XLS", "xlsx": "XLS",
+        "zip": "ZIP", "rar": "RAR",
+        "jpg": "IMG", "jpeg": "IMG", "png": "IMG", "gif": "IMG",
+        "mp4": "VID", "mov": "VID", "avi": "VID",
+        "mp3": "AUD", "wav": "AUD",
+        "txt": "TXT",
+    }.get(ext, "FILE")
 app.secret_key = "randomtext"
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
@@ -60,12 +60,12 @@ def delete_from_storage(file_url):
             parts = file_url.split("class-files/")
             if len(parts) > 1:
                 storage_path = parts[1].split("?")[0]
-                print(f"🗑️ Deleting from storage: {storage_path}")
+                print(f"Deleting from storage: {storage_path}")
                 supabase_admin.storage.from_(BUCKET).remove([storage_path])
                 return True
         return False
     except Exception as e:
-        print(f"❌ Storage deletion error: {e}")
+        print(f"Storage deletion error: {e}")
         return False
 
 # ===== HOME ROUTE =====
@@ -279,7 +279,7 @@ def admin():
         session.permanent = True
 
         # Debug: Print session to logs
-        print(f"🔐 Admin logged in. Session: {dict(session)}")
+        print(f"Admin logged in. Session: {dict(session)}")
 
         return render_template("admin.html",
             files=supabase.table("files").select("*").order("uploaded_at", desc=True).limit(20).execute().data,
@@ -299,10 +299,10 @@ def admin_logout():
 @app.route("/admin/delete/file/<int:file_id>", methods=["POST"])
 def admin_delete_file(file_id):
     if not session.get('is_admin'):
-        print("❌ Not admin, redirecting to login")
+        print("Not admin, redirecting to login")
         return redirect(url_for('admin'))
 
-    print(f"✅ Admin confirmed. Deleting file {file_id}")
+    print(f"Admin confirmed. Deleting file {file_id}")
 
     try:
         file_data = supabase.table("files").select("*").eq("id", file_id).execute().data
@@ -313,16 +313,16 @@ def admin_delete_file(file_id):
         filename = file.get('filename', 'Unknown')
         file_url = file.get('file_url', '')
 
-        print(f"🗑️ Deleting file: {filename}")
+        print(f"Deleting file: {filename}")
 
         delete_from_storage(file_url)
         supabase_admin.table("files").delete().eq("id", file_id).execute()
-        print(f"✅ File deleted: {filename}")
+        print(f"File deleted: {filename}")
 
         return redirect(request.referrer or url_for("admin"))
 
     except Exception as e:
-        print(f"❌ Delete error: {e}")
+        print(f"Delete error: {e}")
         return redirect(request.referrer or url_for("admin"))
 
 @app.route("/admin/delete/announcement/<int:announcement_id>", methods=["POST"])
@@ -340,7 +340,7 @@ def admin_delete_announcement(announcement_id):
         supabase_admin.table("announcements").delete().eq("id", announcement_id).execute()
         return redirect(request.referrer or url_for("announcements"))
     except Exception as e:
-        print(f"❌ Delete error: {e}")
+        print(f"Delete error: {e}")
         return redirect(request.referrer or url_for("admin"))
 
 @app.route("/admin/delete/poll/<int:poll_id>", methods=["POST"])
@@ -353,7 +353,7 @@ def admin_delete_poll(poll_id):
         supabase_admin.table("polls").delete().eq("id", poll_id).execute()
         return redirect(request.referrer or url_for("polls"))
     except Exception as e:
-        print(f"❌ Delete error: {e}")
+        print(f"Delete error: {e}")
         return redirect(request.referrer or url_for("admin"))
 
 @app.route("/admin/delete/date/<int:date_id>", methods=["POST"])
@@ -377,7 +377,7 @@ def admin_delete_date(date_id):
         supabase_admin.table("important_dates").delete().eq("id", date_id).execute()
         return redirect(request.referrer or url_for("home"))
     except Exception as e:
-        print(f"❌ Delete error: {e}")
+        print(f"Delete error: {e}")
         return redirect(request.referrer or url_for("admin"))
 
 @app.route("/admin/delete/attachment/<int:attachment_id>", methods=["POST"])
@@ -393,7 +393,7 @@ def admin_delete_attachment(attachment_id):
         supabase_admin.table("date_attachments").delete().eq("id", attachment_id).execute()
         return redirect(request.referrer or url_for("home"))
     except Exception as e:
-        print(f"❌ Delete error: {e}")
+        print(f"Delete error: {e}")
         return redirect(request.referrer or url_for("admin"))
 
 # ===== BULK DELETE =====
@@ -412,7 +412,7 @@ def admin_delete_all_files():
         supabase_admin.table("files").delete().neq("id", 0).execute()
         return redirect(url_for("admin"))
     except Exception as e:
-        print(f"❌ Delete error: {e}")
+        print(f"Delete error: {e}")
         return redirect(url_for("admin"))
 
 @app.route("/admin/delete/all/polls", methods=["POST"])
@@ -427,7 +427,7 @@ def admin_delete_all_polls():
         supabase_admin.table("polls").delete().neq("id", 0).execute()
         return redirect(url_for("admin"))
     except Exception as e:
-        print(f"❌ Delete error: {e}")
+        print(f"Delete error: {e}")
         return redirect(url_for("admin"))
 
 @app.route("/admin/delete/all/announcements", methods=["POST"])
@@ -444,7 +444,7 @@ def admin_delete_all_announcements():
         supabase_admin.table("announcements").delete().neq("id", 0).execute()
         return redirect(url_for("admin"))
     except Exception as e:
-        print(f"❌ Delete error: {e}")
+        print(f"Delete error: {e}")
         return redirect(url_for("admin"))
 
 if __name__ == "__main__":

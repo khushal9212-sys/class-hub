@@ -5,26 +5,26 @@
 {% block content %}
     <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
         <a href="/" class="btn btn-secondary">← Back to Home</a>
-        <h1 style="font-size: 28px; margin: 0;">🔐 Admin Dashboard</h1>
+        <h1 style="font-size: 28px; margin: 0;">Admin Dashboard</h1>
         {% if session.get('is_admin') %}
-            <a href="/admin/logout" class="btn btn-danger" style="margin-left: auto;" onclick="return confirm('Logout?')">🚪 Logout</a>
+            <a href="/admin/logout" class="btn btn-danger" style="margin-left: auto;" onclick="return confirm('Logout?')">Logout</a>
         {% endif %}
     </div>
 
     <!-- Stats Cards -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 32px;">
         <div class="card" style="text-align: center; padding: 20px;">
-            <div style="font-size: 32px;">📄</div>
+            <div style="font-size: 12px; font-weight: 700; letter-spacing: .08em;">FILES</div>
             <div style="font-size: 24px; font-weight: 700;">{{ files|length }}</div>
             <div style="font-size: 13px; color: #64748B;">Recent Files</div>
         </div>
         <div class="card" style="text-align: center; padding: 20px;">
-            <div style="font-size: 32px;">📢</div>
+            <div style="font-size: 12px; font-weight: 700; letter-spacing: .08em;">POSTS</div>
             <div style="font-size: 24px; font-weight: 700;">{{ announcements|length }}</div>
             <div style="font-size: 13px; color: #64748B;">Announcements</div>
         </div>
         <div class="card" style="text-align: center; padding: 20px;">
-            <div style="font-size: 32px;">📊</div>
+            <div style="font-size: 12px; font-weight: 700; letter-spacing: .08em;">POLLS</div>
             <div style="font-size: 24px; font-weight: 700;">{{ polls|length }}</div>
             <div style="font-size: 13px; color: #64748B;">Polls</div>
         </div>
@@ -32,19 +32,19 @@
 
     <!-- ===== FILES SECTION ===== -->
     <div class="card">
-        <h3>📄 Recent Files</h3>
+        <h3>Recent Files</h3>
         {% if files %}
             <ul class="file-list">
                 {% for f in files %}
                     <li class="file-item">
                         <span class="file-info">
-                            <span class="file-icon">📄</span>
+                            <span class="file-icon">FILE</span>
                             <a href="{{ f.file_url }}" target="_blank" class="file-name">{{ f.filename }}</a>
                         </span>
                         <span class="file-meta">by {{ f.uploader_name or "Anonymous" }} • {{ f.uploaded_at }}</span>
                         <form action="/admin/delete/file/{{ f.id }}" method="post" style="margin: 0;" 
-                              onsubmit="return confirm('⚠️ Delete this file permanently?')">
-                            <button type="submit" class="btn btn-danger btn-sm">🗑️ Delete</button>
+                              onsubmit="return confirm(' Delete this file permanently?')">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                         </form>
                     </li>
                 {% endfor %}
@@ -56,7 +56,7 @@
 
     <!-- ===== ANNOUNCEMENTS SECTION ===== -->
     <div class="card">
-        <h3>📢 Recent Announcements</h3>
+        <h3>Recent Announcements</h3>
         {% if announcements %}
             {% for a in announcements %}
                 <div style="padding: 12px 0; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
@@ -70,11 +70,11 @@
                         </div>
                         <p style="margin: 4px 0 0 0; font-size: 14px;">{{ a.text }}</p>
                         {% if a.file_url %}
-                            <a href="{{ a.file_url }}" target="_blank" class="btn btn-secondary btn-sm">📎 View Attachment</a>
+                            <a href="{{ a.file_url }}" target="_blank" class="btn btn-secondary btn-sm">View Attachment</a>
                         {% endif %}
                     </div>
                     <form action="/admin/delete/announcement/{{ a.id }}" method="post" style="margin: 0;">
-                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this announcement?')">🗑️ Delete</button>
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this announcement?')">Delete</button>
                     </form>
                 </div>
             {% endfor %}
@@ -85,7 +85,7 @@
 
     <!-- ===== POLLS SECTION ===== -->
     <div class="card">
-        <h3>📊 Recent Polls</h3>
+        <h3>Recent Polls</h3>
         {% if polls %}
             {% for p in polls %}
                 <div style="padding: 12px 0; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
@@ -94,14 +94,14 @@
                             <strong>{{ p.question }}</strong>
                             <span style="font-size: 13px; color: #94A3B8;">{{ p.created_at }}</span>
                             {% if p.is_active %}
-                                <span style="background: #10B981; color: white; padding: 2px 10px; border-radius: 12px; font-size: 11px;">🟢 Active</span>
+                                <span class="status-pill active">Active</span>
                             {% else %}
-                                <span style="background: #94A3B8; color: white; padding: 2px 10px; border-radius: 12px; font-size: 11px;">🔴 Closed</span>
+                                <span class="status-pill">Closed</span>
                             {% endif %}
                         </div>
                     </div>
                     <form action="/admin/delete/poll/{{ p.id }}" method="post" style="margin: 0;">
-                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this poll?')">🗑️ Delete</button>
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this poll?')">Delete</button>
                     </form>
                 </div>
             {% endfor %}
@@ -112,12 +112,12 @@
 
     <!-- ===== QUICK ACTIONS ===== -->
     <div class="card">
-        <h3>⚡ Quick Actions</h3>
+        <h3>Quick Actions</h3>
         <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px;">
-            <a href="/announcements" class="btn btn-secondary">📢 Manage Announcements</a>
-            <a href="/polls" class="btn btn-secondary">📊 Manage Polls</a>
-            <a href="/general" class="btn btn-secondary">📂 Manage Documents</a>
-            <a href="/" class="btn btn-secondary">🏠 Go to Home</a>
+            <a href="/announcements" class="btn btn-secondary">Manage Announcements</a>
+            <a href="/polls" class="btn btn-secondary">Manage Polls</a>
+            <a href="/general" class="btn btn-secondary">Manage Documents</a>
+            <a href="/" class="btn btn-secondary">Go to Home</a>
         </div>
     </div>
 {% endblock %}

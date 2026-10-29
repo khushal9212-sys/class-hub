@@ -5,14 +5,14 @@
 {% block content %}
     <!-- ===== HERO ===== -->
     <div class="hero fade-in">
-        <h1>📚 Class Hub</h1>
+        <h1>Class Hub</h1>
         <p>Unofficial, student-run archive — always confirm dates with your teacher.</p>
     </div>
 
     <!-- ===== ANNOUNCEMENT BANNER ===== -->
     {% if latest_announcement %}
     <div class="banner fade-in">
-        <span class="banner-icon">📢</span>
+
         <div class="banner-content">
             <strong>{{ latest_announcement.uploader_name or "Anonymous" }}:</strong>
             {{ latest_announcement.text }}
@@ -23,39 +23,39 @@
 
     <!-- ===== NAVIGATION ===== -->
     <nav class="nav-bar fade-in">
-        <a href="/polls">📊 Polls</a>
-        <a href="/general">📂 General Documents</a>
+        <a href="/polls">Polls</a>
+        <a href="/general">General Documents</a>
         {% if session.get('is_admin') %}
-            <a href="/admin" style="margin-left: auto; color: #EF4444;">🔐 Admin Panel</a>
-            <a href="/admin/logout" style="color: #94A3B8;">🚪 Logout</a>
+            <a href="/admin" style="margin-left: auto; color: #EF4444;">Admin Panel</a>
+            <a href="/admin/logout" style="color: #94A3B8;">Logout</a>
         {% else %}
-            <a href="/admin" style="margin-left: auto; color: #94A3B8;">🔐 Admin</a>
+            <a href="/admin" style="margin-left: auto; color: #94A3B8;">Admin</a>
         {% endif %}
     </nav>
 
     <!-- ===== IMPORTANT DATES ===== -->
     <div class="card fade-in">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-            <h2>📅 Important Dates</h2>
+            <h2>Important Dates</h2>
             <label style="font-size: 14px; color: #64748B; cursor: pointer;">
                 <input type="checkbox" id="showPastDates" onchange="togglePastDates()">
                 Show past dates
             </label>
         </div>
-        
+
         <!-- Add Date Form -->
         <form action="/dates/add" method="post" enctype="multipart/form-data" style="margin-bottom: 20px;">
             <div class="form-row">
                 <input type="text" name="title" placeholder="e.g. DSA Mid-sem Test" required>
                 <input type="date" name="date" required>
                 <select name="type">
-                    <option value="test">🔴 Test</option>
-                    <option value="assignment">🟡 Assignment</option>
+                    <option value="test">Test</option>
+                    <option value="assignment">Assignment</option>
                 </select>
             </div>
             <div class="form-row">
                 <select name="stream_id">
-                    <option value="">📌 All subjects</option>
+                    <option value="">All subjects</option>
                     {% for stream in streams %}
                         <option value="{{ stream.id }}">{{ stream.name }}</option>
                     {% endfor %}
@@ -64,18 +64,18 @@
                 <div class="file-input-wrapper">
                     <input type="file" name="file" id="dateFile" onchange="updateFileName(this)">
                     <label for="dateFile" class="file-label">
-                        <span class="file-icon">📎</span>
+                        <span class="file-icon">FILE</span>
                         Attach File
                     </label>
                     <span class="file-name">No file chosen</span>
                 </div>
-                <button type="submit" class="btn btn-primary">➕ Add Date</button>
+                <button type="submit" class="btn btn-primary">Add Date</button>
             </div>
         </form>
 
         <!-- Future Dates -->
         <div id="futureDates">
-            <h4 style="color: #10B981; margin-bottom: 8px;">🟢 Upcoming</h4>
+            <h4 class="section-kicker">Upcoming</h4>
             <div class="date-grid">
                 {% for d in future_dates %}
                 <div class="date-item {{ d.type }} fade-in">
@@ -86,14 +86,14 @@
                             <span class="subject-tag">{{ d.stream_name }}</span>
                         {% endif %}
                     </div>
-                    
+
                     <div class="date-meta">
-                        <span>📆 {{ d.date }}</span>
+                        <span>{{ d.date }}</span>
                         {% if d.description %}
-                            <span>📝 {{ d.description }}</span>
+                            <span>{{ d.description }}</span>
                         {% endif %}
                         {% if d.file_url %}
-                            <a href="{{ d.file_url }}" target="_blank" class="btn btn-secondary btn-sm">📎 Attachment</a>
+                            <a href="{{ d.file_url }}" target="_blank" class="btn btn-secondary btn-sm">Attachment</a>
                         {% endif %}
                     </div>
 
@@ -103,14 +103,14 @@
                             {% for att in d.attachments %}
                                 <li class="file-item">
                                     <span class="file-info">
-                                        <span class="file-icon">📄</span>
+                                        <span class="file-icon">FILE</span>
                                         <a href="{{ att.file_url }}" target="_blank" class="file-name">{{ att.filename }}</a>
                                     </span>
                                     <span class="file-meta">by {{ att.uploader_name or "Anonymous" }}</span>
                                     {% if session.get('is_admin') %}
                                         <form action="/admin/delete/attachment/{{ att.id }}" method="post" style="margin: 0;"
-                                              onsubmit="return confirm('⚠️ Delete this attachment permanently?')">
-                                            <button type="submit" class="btn btn-danger btn-sm">🗑️</button>
+                                              onsubmit="return confirm(' Delete this attachment permanently?')">
+                                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                         </form>
                                     {% endif %}
                                 </li>
@@ -124,19 +124,19 @@
                         <div class="file-input-wrapper" style="grid-column: span 1;">
                             <input type="file" name="file" id="attachFile{{ d.id }}" onchange="updateFileName(this)" required>
                             <label for="attachFile{{ d.id }}" class="file-label">
-                                <span class="file-icon">📎</span>
+                                <span class="file-icon">FILE</span>
                                 Attach
                             </label>
                             <span class="file-name">No file</span>
                         </div>
-                        <button type="submit" class="btn btn-secondary btn-sm" style="grid-column: span 1;">📎 Attach</button>
+                        <button type="submit" class="btn btn-secondary btn-sm" style="grid-column: span 1;">Attach</button>
                     </form>
 
                     <!-- Admin Delete Date Button -->
                     {% if session.get('is_admin') %}
                         <form action="/admin/delete/date/{{ d.id }}" method="post" style="margin-top: 10px;"
-                              onsubmit="return confirm('⚠️ Delete this date and all its attachments permanently?')">
-                            <button type="submit" class="btn btn-danger btn-sm">🗑️ Delete Date</button>
+                              onsubmit="return confirm(' Delete this date and all its attachments permanently?')">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete Date</button>
                         </form>
                     {% endif %}
                 </div>
@@ -148,7 +148,7 @@
 
         <!-- Past Dates -->
         <div id="pastDates" style="display: none; opacity: 0.6;">
-            <h4 style="color: #94A3B8; margin-bottom: 8px;">🔴 Past</h4>
+            <h4 style="color: #94A3B8; margin-bottom: 8px;">Past</h4>
             <div class="date-grid">
                 {% for d in past_dates %}
                 <div class="date-item {{ d.type }} fade-in">
@@ -159,14 +159,14 @@
                             <span class="subject-tag">{{ d.stream_name }}</span>
                         {% endif %}
                     </div>
-                    
+
                     <div class="date-meta">
-                        <span>📆 {{ d.date }}</span>
+                        <span>{{ d.date }}</span>
                         {% if d.description %}
-                            <span>📝 {{ d.description }}</span>
+                            <span>{{ d.description }}</span>
                         {% endif %}
                         {% if d.file_url %}
-                            <a href="{{ d.file_url }}" target="_blank" class="btn btn-secondary btn-sm">📎 Attachment</a>
+                            <a href="{{ d.file_url }}" target="_blank" class="btn btn-secondary btn-sm">Attachment</a>
                         {% endif %}
                     </div>
 
@@ -176,14 +176,14 @@
                             {% for att in d.attachments %}
                                 <li class="file-item">
                                     <span class="file-info">
-                                        <span class="file-icon">📄</span>
+                                        <span class="file-icon">FILE</span>
                                         <a href="{{ att.file_url }}" target="_blank" class="file-name">{{ att.filename }}</a>
                                     </span>
                                     <span class="file-meta">by {{ att.uploader_name or "Anonymous" }}</span>
                                     {% if session.get('is_admin') %}
                                         <form action="/admin/delete/attachment/{{ att.id }}" method="post" style="margin: 0;"
-                                              onsubmit="return confirm('⚠️ Delete this attachment permanently?')">
-                                            <button type="submit" class="btn btn-danger btn-sm">🗑️</button>
+                                              onsubmit="return confirm(' Delete this attachment permanently?')">
+                                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                         </form>
                                     {% endif %}
                                 </li>
@@ -197,19 +197,19 @@
                         <div class="file-input-wrapper" style="grid-column: span 1;">
                             <input type="file" name="file" id="attachFilePast{{ d.id }}" onchange="updateFileName(this)" required>
                             <label for="attachFilePast{{ d.id }}" class="file-label">
-                                <span class="file-icon">📎</span>
+                                <span class="file-icon">FILE</span>
                                 Attach
                             </label>
                             <span class="file-name">No file</span>
                         </div>
-                        <button type="submit" class="btn btn-secondary btn-sm" style="grid-column: span 1;">📎 Attach</button>
+                        <button type="submit" class="btn btn-secondary btn-sm" style="grid-column: span 1;">Attach</button>
                     </form>
 
                     <!-- Admin Delete Date Button -->
                     {% if session.get('is_admin') %}
                         <form action="/admin/delete/date/{{ d.id }}" method="post" style="margin-top: 10px;"
-                              onsubmit="return confirm('⚠️ Delete this date and all its attachments permanently?')">
-                            <button type="submit" class="btn btn-danger btn-sm">🗑️ Delete Date</button>
+                              onsubmit="return confirm(' Delete this date and all its attachments permanently?')">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete Date</button>
                         </form>
                     {% endif %}
                 </div>
@@ -223,7 +223,7 @@
     <!-- ===== SUBJECTS ===== -->
     <div class="card fade-in">
         <div class="card-header">
-            <h2>📁 Subjects</h2>
+            <h2>Subjects</h2>
         </div>
         <div class="subject-grid">
             {% for stream in streams %}

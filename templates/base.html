@@ -1,23 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Class Hub{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     {% block head %}{% endblock %}
 </head>
 <body>
-    <!-- Animated Flowing Lines Background -->
-    <div class="floating-lines">
-        <svg viewBox="0 0 1000 800" preserveAspectRatio="none">
-            <path class="line1" d="M0,400 Q250,100 500,400 T1000,400" stroke-dasharray="1000" />
-            <path class="line2" d="M0,200 Q250,500 500,200 T1000,200" stroke-dasharray="1000" />
-            <path class="line3" d="M0,600 Q250,300 500,600 T1000,600" stroke-dasharray="1000" />
-            <path class="line4" d="M0,100 Q250,700 500,100 T1000,100" stroke-dasharray="1000" />
-        </svg>
-    </div>
-
     <div class="container">
         {% block content %}{% endblock %}
     </div>
@@ -35,7 +28,3 @@
     {% block scripts %}{% endblock %}
 </body>
 </html>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">

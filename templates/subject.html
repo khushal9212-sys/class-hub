@@ -8,11 +8,11 @@
     <div class="page-header fade-in">
         <a href="/" class="btn btn-secondary btn-sm">← Back</a>
         <div class="page-header-title">
-            <span class="page-header-icon">📘</span>
+
             <h1>{{ stream.name }}</h1>
         </div>
         {% if session.get('is_admin') %}
-            <span class="admin-badge">🔐 Admin Mode</span>
+            <span class="admin-badge">Admin Mode</span>
         {% endif %}
     </div>
 
@@ -33,7 +33,7 @@
         <!-- Folder Header -->
         <header class="folder-header">
             <div class="folder-title">
-                <span class="folder-icon">📁</span>
+
                 <h2>{{ folder_labels[ft] }}</h2>
                 <span class="folder-count">{{ folders[ft]|length }} file{{ '' if folders[ft]|length == 1 else 's' }}</span>
             </div>
@@ -42,7 +42,7 @@
                         class="btn btn-primary btn-sm"
                         onclick="toggleUpload('{{ ft }}')"
                         id="uploadBtn-{{ ft }}">
-                    ➕ Add File
+                     Add File
                 </button>
                 <button type="button"
                         class="btn btn-secondary btn-sm collapse-btn"
@@ -71,7 +71,7 @@
                         <input type="file" name="file" id="fileInput{{ ft }}"
                                onchange="updateFileName(this)" required>
                         <label for="fileInput{{ ft }}" class="file-label">
-                            <span class="file-icon">📎</span>
+                            <span class="file-icon">FILE</span>
                             <span>Choose File</span>
                         </label>
                         <span class="file-name">No file chosen</span>
@@ -79,7 +79,7 @@
                 </div>
 
                 <div class="upload-form-buttons">
-                    <button type="submit" class="btn btn-primary">⬆ Upload</button>
+                    <button type="submit" class="btn btn-primary">Upload</button>
                     <button type="button" class="btn btn-secondary" onclick="toggleUpload('{{ ft }}')">Cancel</button>
                 </div>
             </form>
@@ -107,8 +107,8 @@
                                 <a href="{{ f.file_url }}" target="_blank" class="btn btn-secondary btn-sm">Open</a>
                                 {% if session.get('is_admin') %}
                                     <form action="/admin/delete/file/{{ f.id }}" method="post"
-                                          onsubmit="return confirm('⚠️ Delete this file permanently?\n\n{{ f.filename }}')">
-                                        <button type="submit" class="btn btn-danger btn-sm">🗑️</button>
+                                          onsubmit="return confirm(' Delete this file permanently?\n\n{{ f.filename }}')">
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                     </form>
                                 {% endif %}
                             </div>
@@ -117,11 +117,11 @@
                 </ul>
             {% else %}
                 <div class="empty-state">
-                    <div class="empty-state-icon">📭</div>
+
                     <p class="empty-state-title">No files yet</p>
                     <p class="empty-state-text">Be the first to add a {{ folder_labels[ft]|lower }} file.</p>
                     <button type="button" class="btn btn-primary btn-sm" onclick="toggleUpload('{{ ft }}')">
-                        ➕ Add File
+                         Add File
                     </button>
                 </div>
             {% endif %}
@@ -136,11 +136,11 @@
             const isOpen = !panel.hasAttribute('hidden');
             if (isOpen) {
                 panel.setAttribute('hidden', '');
-                btn.innerHTML = '➕ Add File';
+                btn.innerHTML = ' Add File';
                 btn.classList.remove('btn-active');
             } else {
                 panel.removeAttribute('hidden');
-                btn.innerHTML = '✕ Close';
+                btn.innerHTML = ' Close';
                 btn.classList.add('btn-active');
                 panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
